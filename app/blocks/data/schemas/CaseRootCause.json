@@ -1,0 +1,62 @@
+{
+  "collectionName": "caserootcause",
+  "schemaName": "CaseRootCause",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "CaseId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK Case.itemId.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "RootCauseId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK RootCause.itemId.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "TaggedAt",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "When the case was tagged with this root cause.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "TaggedBy",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "User.itemId of the tagging user.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Source",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "manual | ai_suggested_accepted. Lets the UI distinguish human vs AI-originated tags (NFR-8).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}

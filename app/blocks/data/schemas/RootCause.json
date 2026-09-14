@@ -1,0 +1,51 @@
+{
+  "collectionName": "rootcause",
+  "schemaName": "RootCause",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "Slug",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": true,
+      "description": "Stable kebab-case slug.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "DisplayName",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Human-readable name shown on chips and dropdowns.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Description",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Optional explanation for staff.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "IsActive",
+      "type": "Boolean",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Soft-delete / archive flag. Vocabulary is closed but admins can add entries (NFR-9).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}

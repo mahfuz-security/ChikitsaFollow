@@ -1,0 +1,73 @@
+{
+  "collectionName": "caseevent",
+  "schemaName": "CaseEvent",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "CaseId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK Case.itemId. Indexed for case history lookups.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "EventType",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "created | note | ai_draft | ai_suggestion | sent_reply | status_change | approval_requested | approval_decided | closed. Distinguishes human vs AI entries (NFR-8).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "ActorUserId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "User.itemId of the actor (system if from a scheduler).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Text",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Free-text content of the event (note / reply / AI output). Firewall-scanned before insert (FR-19).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "MetadataJson",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "JSON string of structured metadata (e.g. draft/final text pair, AI model info). Append-only payload.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "AiGenerated",
+      "type": "Boolean",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "True when the event's content was produced by the AI subsystem (NFR-8 auditability).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}
