@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-09-14T11:35:21.533Z",
+  "total": 7,
+  "failed": 0,
+  "results": [
+    {
+      "id": "DC-1",
+      "ok": true,
+      "detail": "No clinical field names or descriptions found."
+    },
+    {
+      "id": "DC-2",
+      "ok": true,
+      "detail": "PatientRefCode is a unique String field; generation module uses CF- + base32."
+    },
+    {
+      "id": "DC-3",
+      "ok": true,
+      "detail": "gateway=true serializer=true"
+    },
+    {
+      "id": "DC-4",
+      "ok": true,
+      "detail": "gatewayCaseEventPolicy=true appUpdate=false appDelete=false"
+    },
+    {
+      "id": "FR-12",
+      "ok": true,
+      "detail": "branchFilter=true approvalsViewer=true"
+    },
+    {
+      "id": "FR-19",
+      "ok": true,
+      "detail": "fw=true newCase=true reply=true"
+    },
+    {
+      "id": "FR-22",
+      "ok": true,
+      "detail": "allowlist=true draftUses=true noPii=true"
+    }
+  ]
+}

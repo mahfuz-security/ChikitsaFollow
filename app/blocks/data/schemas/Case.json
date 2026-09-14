@@ -1,0 +1,106 @@
+{
+  "collectionName": "case",
+  "schemaName": "Case",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "BranchId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK Branch.itemId. Row-scoped at the data-query layer for front_desk/branch_manager (FR-12).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Category",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Closed vocabulary: 'wait_time' | 'billing' | 'staff_behavior' | 'facility' | 'communication' | 'other'.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Severity",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "'Low' | 'Medium' | 'High'.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "PatientRefCode",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": true,
+      "description": "Generated, non-reversible masked reference (DC-2). Distinct from any clinical MRN. Format: 'CF-' + 8 base32 chars.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Subject",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Short complaint subject (\u2264120 chars). Firewall-scanned on insert (FR-19).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "PromisedAt",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Commitment time the front-desk promised to the patient.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Status",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "open | in_progress | awaiting_approval | resolved | closed. State transitions emit CaseEvent rows.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "ClosedAt",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "When the case was closed (FR-8).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "RootCauseId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK RootCause.itemId. Required before the case can be closed (FR-8).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}

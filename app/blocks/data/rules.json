@@ -1,0 +1,116 @@
+{
+  "policies": [
+    {
+      "schemaName": "Approval",
+      "policyName": "appr-mask-fd",
+      "policyDescription": "DC-3 mask",
+      "policyType": 1,
+      "operation": 0,
+      "fieldNames": [
+        "Amount",
+        "Currency"
+      ],
+      "ruleGroup": {
+        "logicalOperator": 0,
+        "rules": [],
+        "nestedGroups": []
+      },
+      "priority": 1,
+      "isAllowPolicy": false
+    },
+    {
+      "schemaName": "Case",
+      "policyName": "case-deny-edit-frontdesk",
+      "policyDescription": "FR-12: deny UPDATE on every Case field for front_desk. Front-desk staff record changes via CaseEvent appends, never by mutating the Case row itself.",
+      "policyType": 1,
+      "operation": 0,
+      "fieldNames": [
+        "BranchId",
+        "Category",
+        "Severity",
+        "PatientRefCode",
+        "Subject",
+        "PromisedAt",
+        "Status",
+        "ClosedAt",
+        "RootCauseId"
+      ],
+      "ruleGroup": {
+        "logicalOperator": 0,
+        "rules": [],
+        "nestedGroups": []
+      },
+      "priority": 1,
+      "isAllowPolicy": false
+    },
+    {
+      "schemaName": "Case",
+      "policyName": "case-deny-write-qualitylead",
+      "policyDescription": "FR-13: deny WRITE/CLOSE on every Case field for quality_lead. Quality leads read and tag, but cannot close cases (FR-13).",
+      "policyType": 1,
+      "operation": 0,
+      "fieldNames": [
+        "BranchId",
+        "Category",
+        "Severity",
+        "PatientRefCode",
+        "Subject",
+        "PromisedAt",
+        "Status",
+        "ClosedAt",
+        "RootCauseId"
+      ],
+      "ruleGroup": {
+        "logicalOperator": 0,
+        "rules": [],
+        "nestedGroups": []
+      },
+      "priority": 1,
+      "isAllowPolicy": false
+    },
+    {
+      "schemaName": "CaseEvent",
+      "policyName": "caseevent-deny-edit",
+      "policyDescription": "DC-4: deny EDIT on every CaseEvent field for every role. CaseEvent is append-only (FR-6, DC-4).",
+      "policyType": 1,
+      "operation": 0,
+      "fieldNames": [
+        "CaseId",
+        "EventType",
+        "ActorUserId",
+        "Text",
+        "MetadataJson",
+        "AiGenerated"
+      ],
+      "ruleGroup": {
+        "logicalOperator": 0,
+        "rules": [],
+        "nestedGroups": []
+      },
+      "priority": 1,
+      "isAllowPolicy": false
+    },
+    {
+      "schemaName": "CaseEvent",
+      "policyName": "caseevent-deny-delete",
+      "policyDescription": "DC-4: deny DELETE on every CaseEvent field for every role. CaseEvent is append-only (FR-6, DC-4).",
+      "policyType": 1,
+      "operation": 0,
+      "fieldNames": [
+        "CaseId",
+        "EventType",
+        "ActorUserId",
+        "Text",
+        "MetadataJson",
+        "AiGenerated"
+      ],
+      "ruleGroup": {
+        "logicalOperator": 0,
+        "rules": [],
+        "nestedGroups": []
+      },
+      "priority": 1,
+      "isAllowPolicy": false
+    }
+  ]
+}

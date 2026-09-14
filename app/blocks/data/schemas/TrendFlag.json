@@ -1,0 +1,95 @@
+{
+  "collectionName": "trendflag",
+  "schemaName": "TrendFlag",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "BranchId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK Branch.itemId.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "RootCauseId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK RootCause.itemId.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "WindowStart",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Inclusive start of the trend window.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "WindowEnd",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Inclusive end of the trend window.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "CaseCount",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Number of cases that triggered the flag. Numeric value stored as string; parse with Number() in app code (the Data Gateway field-type enum does not expose a numeric type in this project).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "DraftedFix",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "AI-drafted process-fix recommendation (FR-21). Visible only to quality_lead.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Status",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "new | actioned | dismissed.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "QualityLeadUserId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "User.itemId of the quality_lead reviewing the flag.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}

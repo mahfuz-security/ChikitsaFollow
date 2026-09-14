@@ -1,0 +1,95 @@
+{
+  "collectionName": "organizationmember",
+  "fields": [
+    {
+      "name": "UserId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "IAM user itemId. Indexed for row-level lookup. A user may have multiple active rows here -- one per org -- UNLESS their roleSlug is nurse or branch_manager (enforced by write-time check in useOrganizationMembers).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "OrgId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "IAM organization itemId this membership applies to. Indexed for org-scoped listing.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "RoleSlug",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "Role assigned within this org (patient, doctor, nurse, branch_manager, ...). The role at the project level is registered separately; this column records which role the user plays WITHIN THIS ORG so a single IAM user can be doctor in org A and patient in org B without role conflict.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Status",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "active|inactive. Append-only: a status flip writes a new row rather than editing this one (matches the SRS DC-4 append-only pattern).",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "JoinedAt",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "When the membership became active.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "LeftAt",
+      "type": "DateTime",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "When the membership ended. Append-only history; status=inactive rows should always have a LeftAt.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "InvitedByUserId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "IAM user itemId of the manager/admin/clouduser who created this membership. Empty for self-signup rows (patient only).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Source",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "signup|manager_invite|admin_invite|clouduser_invite. Audit trail for how this membership originated.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    }
+  ],
+  "schemaName": "OrganizationMember",
+  "schemaType": 1
+}

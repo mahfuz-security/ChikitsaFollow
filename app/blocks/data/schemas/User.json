@@ -1,0 +1,73 @@
+{
+  "collectionName": "user",
+  "schemaName": "User",
+  "schemaType": 1,
+  "fields": [
+    {
+      "name": "Email",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": true,
+      "description": "Login email.",
+      "requiredOn": "Update",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "FirstName",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": false,
+      "description": "Given name.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "LastName",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": false,
+      "description": "Family name.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "Phone",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": true,
+      "isUniqueData": false,
+      "description": "Direct contact phone (E.164 recommended).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "BranchId",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "FK Branch.itemId. Front-desk and branch-manager users are branch-scoped (FR-12).",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    },
+    {
+      "name": "ClinicRole",
+      "type": "String",
+      "isArray": false,
+      "isPIIData": false,
+      "isUniqueData": false,
+      "description": "front_desk | branch_manager | quality_lead | admin | doctor | nurse | patient.",
+      "requiredOn": "None",
+      "fields": [],
+      "validationRule": null
+    }
+  ]
+}
