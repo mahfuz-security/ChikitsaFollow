@@ -1,410 +1,960 @@
 # Software Requirements Specification (SRS)
+## ChikitsaFollow – Clinic Follow-up and Service Recovery Desk
 
-## ChikitsaFollow Builder Agent
-### An AI Agent for Generating Clinic Follow-up & Service Recovery Software
-
-**Document version:** 1.1
-**Date:** September 14, 2026
-**Status:** Draft for review — v1.1 adds API contract, security/threat model, and test plan
+**Document Version:** 1.0  
+**Status:** Draft / Implemented Prototype  
+**Implementation Approach:** Configured using an existing software solution/platform rather than building the complete system from scratch.
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-This SRS specifies the functional and non-functional requirements for the **ChikitsaFollow Builder Agent** — an AI agent that, given a structured intake describing a diagnostic clinic or hospital chain, generates a deployable, multi-role service-recovery/complaint-management application for that clinic. This document is written to be usable by engineers implementing the agent, QA verifying it, and stakeholders approving scope.
+This Software Requirements Specification (SRS) defines the functional, non-functional, security, workflow, data, reporting, and AI-assisted requirements for **ChikitsaFollow**, a clinic follow-up and service recovery system for a diagnostic clinic chain.
 
-This SRS follows the intent of IEEE 830 structure, adapted for an AI-agent-as-code-generator system rather than a conventional end-user application.
+The system is intended to help clinic staff record, manage, resolve, verify, and analyze service complaints while preventing clinical information from being stored in the complaint-management environment.
 
-### 1.2 Scope
-The system in scope is the **builder agent itself** — the pipeline that takes clinic intake and produces:
-- a data model,
-- a backend/API,
-- role-based UIs (front desk, branch manager, quality lead, admin),
-- a configured runtime AI subsystem (drafting, categorization, trend detection),
-- a compliance report,
-- and a deployment package.
+### 1.2 Background
+The clinic operates multiple branches, including Dhanmondi, Uttara, and Mirpur, serving approximately 1,200 patients per day.
 
-Out of scope: the specific behavior of any one clinic's deployed instance beyond what is generated from intake; integration with clinical systems beyond an optional read-only status feed; legal/regulatory certification for any jurisdiction.
+Common service complaints include:
 
-### 1.3 Intended Audience
-- Engineers building the agent's generation pipeline
-- QA/test engineers validating generated output against acceptance criteria
-- Product owners approving the agent's scope per clinic engagement
-- Compliance/security reviewers auditing the firewall and access-control guarantees
+- Delayed reports
+- Unclear fasting or urine-collection instructions
+- Billing mismatches
+- Missed follow-up calls
+- Staff behaviour issues
+- Repeated operational failures such as sample mix-ups
 
-### 1.4 Definitions, Acronyms, Abbreviations
+Currently, front-desk staff often resolve issues verbally without maintaining a reliable record. Branch managers may learn about failures only after patients publish complaints publicly. This creates weak traceability, inconsistent follow-up, poor accountability, and limited ability to identify recurring operational problems.
 
-| Term | Meaning |
+### 1.3 System Objective
+The objective of ChikitsaFollow is to provide a structured case-management process that records:
+
+- What happened
+- What the patient was promised
+- Who took action
+- What was communicated to the patient
+- Whether the complaint was actually resolved
+- What root cause caused the problem
+- Whether the same failure is occurring repeatedly
+
+### 1.4 Implementation Context
+The solution has been implemented using an **existing software platform / existing software solution**.
+
+The implementation therefore focuses on:
+
+- Configuring user roles and permissions
+- Creating complaint forms
+- Creating case workflows
+- Creating approval steps
+- Configuring dashboards and reports
+- Adding automation and AI-assisted features where supported
+- Applying privacy and access-control rules
+
+> **Note:** The exact software/product name was not specified in the source requirements. It can be added to this document later under the implementation architecture section.
+
+---
+
+## 2. Scope
+
+### 2.1 In Scope
+
+The system shall support:
+
+- Complaint / service case creation
+- Branch-based access
+- Complaint categorization
+- Severity assignment
+- Recording commitments made to patients
+- Case history and audit trail
+- Staff action tracking
+- Resolution workflow
+- Refund / fee-waiver approval
+- Root-cause tagging
+- Verified-resolution tracking
+- Branch-level reporting
+- Cross-branch quality reporting
+- Patient identity masking
+- Prevention of clinical information in complaint notes
+- AI-assisted summarization
+- AI-assisted categorization
+- AI-assisted root-cause suggestions
+- AI-assisted reply drafting
+- Cross-case pattern and trend detection
+
+### 2.2 Out of Scope
+
+The following are outside the core scope unless separately integrated:
+
+- Electronic Medical Record (EMR) functionality
+- Clinical diagnosis management
+- Laboratory result storage
+- Medical test interpretation
+- Prescription management
+- Full patient clinical history
+- Replacement of the existing Laboratory Information System (LIS)
+
+---
+
+## 3. Stakeholders and User Roles
+
+### 3.1 Front-Desk Staff
+
+Responsibilities:
+
+- Receive patient or family complaints
+- Create service cases
+- Record what happened
+- Record what was promised
+- Update case progress
+- Review AI-generated responses
+- Send approved communication
+- Close cases where permitted
+
+Restrictions:
+
+- Cannot view management-only compensation values
+- Cannot access other branches unless explicitly authorized
+- Must not enter clinical data
+
+---
+
+### 3.2 Branch Manager
+
+Responsibilities:
+
+- View all complaints within the branch
+- Review unresolved and overdue cases
+- Approve fee waivers and refunds
+- Review complaint trends
+- Review average resolution time
+- Review verified vs. merely closed cases
+- Monitor staff follow-up performance
+
+---
+
+### 3.3 Quality Lead
+
+Responsibilities:
+
+- View complaints across all branches
+- Review cross-branch failure trends
+- Identify recurring root causes
+- Compare branches
+- Initiate process-improvement actions
+- Review AI-detected issue clusters
+
+---
+
+### 3.4 Patient / Family Member
+
+The patient or family member may:
+
+- Submit or communicate a complaint through staff-supported channels
+- Receive acknowledgement
+- Receive a new commitment
+- Receive resolution communication
+- Check status using a reference code if a patient-facing status view is implemented
+
+The patient-facing view must not expose clinical information.
+
+---
+
+## 4. Functional Requirements
+
+### FR-01: User Authentication
+
+The system shall require authenticated access for internal users.
+
+The system shall support separate access privileges for:
+
+- Front-desk staff
+- Branch managers
+- Quality lead
+
+---
+
+### FR-02: Role-Based Access Control
+
+The system shall enforce role-based permissions.
+
+Rules:
+
+- Front-desk staff shall see only cases allowed for their branch.
+- Branch managers shall see all cases for their own branch.
+- The quality lead shall see cases across all branches.
+- Management-only information shall not be visible to front-desk staff.
+
+---
+
+### FR-03: Service Case Creation
+
+The system shall allow front-desk staff to create a complaint/service case in under one minute.
+
+The case form shall include:
+
+- Case reference number
+- Branch
+- Complaint type
+- Severity
+- Complaint description
+- Patient commitment / promise
+- Masked patient reference
+- Date and time
+- Staff member creating the case
+
+---
+
+### FR-04: Complaint Categories
+
+The minimum complaint categories shall include:
+
+- Report delay
+- Instructions
+- Billing
+- Missed follow-up
+- Staff behaviour
+
+The system should allow administrators to add additional categories when necessary.
+
+---
+
+### FR-05: Patient Identity Masking
+
+The system shall use a masked patient reference instead of displaying full patient identity in normal complaint lists and analytics.
+
+Examples:
+
+- PT-XXXX31
+- CASE-2026-00158
+
+The system shall minimize personally identifiable patient information.
+
+---
+
+### FR-06: Permanent Case History
+
+For each complaint, the system shall permanently record:
+
+1. What happened
+2. Who took action
+3. What the patient was told
+
+Previous entries should not be silently overwritten.
+
+---
+
+### FR-07: Action Log
+
+Every important action shall be logged with:
+
+- User
+- Action
+- Timestamp
+- Previous value where applicable
+- New value where applicable
+
+Examples:
+
+- Case created
+- Severity changed
+- Commitment changed
+- Reply edited
+- Refund requested
+- Refund approved
+- Root cause added
+- Case closed
+- Resolution verified
+
+---
+
+### FR-08: Patient Communication Log
+
+The system shall record the exact message or commitment communicated to the patient.
+
+If an AI-generated reply is edited by staff, the final approved version shall be stored.
+
+Example:
+
+AI suggests:
+
+> Report will be available at 6:30 PM.
+
+Staff changes it to:
+
+> Report will be available at 6:00 PM.
+
+The system shall permanently record the final message communicated to the patient.
+
+---
+
+### FR-09: Case Status Management
+
+The system shall support case statuses such as:
+
+- New
+- Open
+- In Progress
+- Waiting for Approval
+- Resolved
+- Closed
+- Verified
+
+The exact workflow may be adjusted based on the capabilities of the existing software platform.
+
+---
+
+### FR-10: Financial Remedy Approval
+
+Cases involving financial remedies shall require approval.
+
+Examples:
+
+- Fee waiver
+- Partial refund
+- Full refund
+
+The workflow shall include:
+
+1. Staff requests compensation.
+2. Authorized manager reviews the request.
+3. Manager approves or rejects.
+4. Decision is recorded.
+5. Case workflow continues.
+
+---
+
+### FR-11: Compensation Confidentiality
+
+Compensation amounts shall only be visible to authorized management users.
+
+Front-desk users shall not see compensation amounts unless explicitly permitted by policy.
+
+---
+
+### FR-12: Root-Cause Tagging
+
+The system shall require or support root-cause tagging when a complaint is resolved or closed.
+
+Example root causes:
+
+- Sample mix-up
+- Re-run required
+- Staff instruction error
+- Billing entry error
+- Follow-up not scheduled
+- Reporting delay
+
+Root-cause tags shall be structured so they can be counted and analyzed.
+
+---
+
+### FR-13: Resolution Verification
+
+The system shall differentiate between:
+
+- A complaint that was simply closed
+- A complaint whose resolution was verified
+
+This allows managers to determine whether the patient actually received a satisfactory outcome.
+
+---
+
+### FR-14: Branch Dashboard
+
+The branch manager dashboard shall show:
+
+- Complaint volume
+- Open cases
+- Overdue cases
+- Resolved cases
+- Average resolution time
+- Verified resolution rate
+- Closed-but-not-verified cases
+- Complaint categories
+- Root-cause trends
+
+---
+
+### FR-15: Cross-Branch Quality Dashboard
+
+The quality lead shall have a cross-branch dashboard showing:
+
+- Complaint volume by branch
+- Failure type by branch
+- Root-cause frequency
+- Average resolution time
+- Verified-resolution percentage
+- Recurring failure patterns
+- Sudden branch-specific spikes
+
+Example:
+
+> Dhanmondi recorded 5 sample-mix-up cases in 30 days while other branches recorded 0.
+
+---
+
+### FR-16: Process-Improvement Action
+
+The quality lead should be able to create or record a process-improvement action based on a recurring root cause.
+
+Example:
+
+- Problem: Sample mix-up
+- Branch: Dhanmondi
+- Corrective action: Double-labeling at sample collection
+- Owner: Branch Operations
+- Status: Open / In Progress / Completed
+
+---
+
+## 5. Clinical Data Protection Requirements
+
+### FR-17: Clinical Firewall
+
+The complaint-management system shall prevent clinical information from being entered into complaint notes.
+
+Examples of information that should be prevented:
+
+- Diagnosis
+- Test result values
+- Medical interpretation
+- Detailed medical condition
+
+The system should allow service-related information only.
+
+Allowed example:
+
+> CBC and HbA1c reports were not delivered by the promised time.
+
+Not allowed example:
+
+> The patient has diabetes and the HbA1c result is 8.5.
+
+---
+
+### FR-18: Clinical Data Detection
+
+Where technically supported, the system should automatically detect possible clinical information before a complaint note is saved.
+
+The implementation may use:
+
+- Validation rules
+- Restricted fields
+- Keyword rules
+- AI-assisted detection
+- Data-loss-prevention controls
+- Review prompts
+
+---
+
+### FR-19: Clinical Data Rejection
+
+If prohibited clinical content is detected, the system shall:
+
+1. Warn the user.
+2. Prevent submission where technically possible.
+3. Explain that clinical data must not be stored in the complaint record.
+4. Allow the user to rewrite the note using service-related wording.
+
+---
+
+## 6. AI-Assisted Requirements
+
+### AI-01: Complaint Summarization
+
+The AI should create a concise summary of complaint text.
+
+The AI must be able to work with complaint descriptions that may contain mixed Bangla and English.
+
+---
+
+### AI-02: Category Suggestion
+
+The AI should suggest the most likely complaint category.
+
+Example:
+
+Input:
+
+> Report was promised at 2 PM but was still unavailable at 5 PM.
+
+Suggested category:
+
+> Report Delay
+
+---
+
+### AI-03: Root-Cause Hint
+
+The AI should suggest a possible root cause based on the complaint and available case context.
+
+The suggestion shall not automatically become the final root cause.
+
+Staff must be able to review or change it.
+
+---
+
+### AI-04: Draft Patient Reply
+
+The AI should generate a respectful draft response.
+
+The response may include:
+
+- Acknowledgement
+- Apology where appropriate
+- New commitment
+- Remedy
+- Clear next step
+
+The reply must be reviewed by staff before being sent.
+
+---
+
+### AI-05: Human Approval
+
+AI-generated replies shall not be automatically sent without staff review.
+
+Staff must be able to:
+
+- Edit
+- Approve
+- Reject
+- Rewrite
+
+---
+
+### AI-06: AI Edit Tracking
+
+The system should maintain a record of:
+
+- AI-generated draft
+- Staff edits
+- Final approved message
+
+This supports accountability and auditability.
+
+---
+
+### AI-07: Cross-Case Pattern Detection
+
+The AI should analyze closed cases across branches and identify recurring failure clusters.
+
+Example:
+
+> Increase in sample-mix-up cases at Dhanmondi branch.
+
+---
+
+### AI-08: Suggested Process Fix
+
+When a recurring operational pattern is detected, the AI should suggest a possible process improvement.
+
+Example:
+
+> Introduce double-label verification at sample collection.
+
+The quality lead must review the recommendation before implementation.
+
+---
+
+## 7. Data Requirements
+
+### 7.1 Case Data
+
+Each case should contain:
+
+| Field | Description |
 |---|---|
-| SRS | Software Requirements Specification |
-| Agent | The AI system that generates the clinic application (subject of this SRS) |
-| Generated App / Instance | The clinic-specific application produced by the agent |
-| Firewall | The enforcement layer preventing clinical data from entering complaint records |
-| Root cause | A closed-vocabulary tag applied to a case at closure |
-| Reference code | A masked, non-clinical identifier used in place of patient identity |
-| LIS/LIMS | Laboratory Information (Management) System |
-| RBAC | Role-Based Access Control |
-
-### 1.5 References
-- Source case document: *"10. ChikitsaFollow: Clinic Follow-up and Service Recovery Desk"*
-- Companion document: *ChikitsaFollow-AI-Agent-Spec.md* (architecture/design spec for this agent)
-
-### 1.6 Overview
-Section 2 describes the agent at a product level, including the primary-customer priority. Section 3 gives detailed functional, UX, and non-functional requirements. Section 4 specifies external interfaces. Section 5 covers data requirements. Section 6 lists constraints and assumptions. Section 7 defines acceptance criteria. Section 8 specifies the detailed API contract. Section 9 covers security requirements and the threat model. Section 10 defines the test plan and production-readiness exit criteria. Section 11 provides traceability back to the source case.
-
----
-
-## 2. Overall Description
-
-### 2.1 Product Perspective
-The agent is a standalone generation system. It is invoked per clinic engagement, consumes a structured intake, and emits a self-contained application plus supporting documentation. It is not itself the clinic-facing product; it is the factory that produces it. It may be re-invoked to regenerate or update an instance when a clinic's intake changes (e.g., a new branch is added).
-
-### 2.2 Product Functions (Summary)
-1. Parse and validate clinic intake; apply safe defaults for missing fields.
-2. Generate a data model enforcing structural separation of clinical and complaint data.
-3. Generate a backend/API enforcing role-based access and field-level money visibility.
-4. Generate role-scoped UIs for front desk, branch manager, quality lead, and admin.
-5. Configure a runtime AI subsystem for per-case drafting and cross-branch trend detection.
-6. Run a guardrail-injection and compliance-verification pass over all generated layers.
-7. Produce a compliance report and deployment package.
-8. Self-test the generated instance against a defined acceptance scenario before handoff.
-
-### 2.3 Primary Customer Definition
-
-**The primary customer of the generated app is the root-level (front-desk) user** — not the branch manager, not the quality lead. This is a deliberate priority, not just one persona among several:
-
-- Front-desk staff are the highest-volume users (many times per day, per branch), under time pressure, at a public counter, often with no prior software training and no time to be trained at length.
-- If the front-desk experience is not fast and effortless, the entire system fails at its source: cases won't get logged, and everything downstream (dashboards, trend detection, quality fixes) collapses because there's no data to work with.
-- Every other role's value (manager visibility, quality-lead trend detection) is a *consequence* of the root-level user actually using the tool willingly. Usability for this persona is therefore treated as a top-level product requirement, not a "nice to have" — see Section 3.7.
-
-Design rule the agent must follow: **when a trade-off arises between admin/analytics sophistication and front-desk simplicity, front-desk simplicity wins.**
-
-### 2.4 User Classes and Characteristics (of the Generated App — since the Agent's "users" are engineers configuring it)
-
-| User class | Technical proficiency | Frequency of use |
-|---|---|---|
-| Front-desk staff | Low; needs a fast, simple form | Many times/day |
-| Branch manager | Medium; reviews dashboards, approves | Daily |
-| Quality lead | Medium-high; interprets trends, authors process fixes | Weekly |
-| Clinic admin | Medium; configures roles/vocabulary | Occasional |
-| Patient/family (optional status view) | Low; reference-code lookup only | Rare, per-case |
-| Builder-agent operator (engineer) | High; provides intake, reviews compliance report | Per engagement |
-
-### 2.5 Operating Environment
-- Generated backend: containerized service, cloud or on-prem deployable per clinic data-residency needs.
-- Generated frontend: responsive web UI, usable on desktop (branch/quality-lead use) and tablet/mobile (front-desk counter use).
-- Runtime AI subsystem: calls an LLM API with the guardrails specified in Section 3.4.
-
-### 2.6 Design and Implementation Constraints
-- No table in the generated schema may store diagnosis, test-result, or clinical-value fields (Section 5.2).
-- All access-control and money-visibility rules must be enforced server-side; UI-only enforcement is non-conforming.
-- Root-cause tagging must use a closed, admin-managed vocabulary, not free text.
-- All patient identifiers exposed to the complaint system must be masked reference codes.
-
-### 2.7 Assumptions and Dependencies
-- The clinic provides accurate branch, role, and category intake; the agent does not infer clinic structure independently.
-- An LLM API is available to the generated instance at runtime for AI-assisted drafting and trend detection.
-- The clinic's existing patient database (if integrated for masking lookups) exposes no clinical fields to the complaint system's queries.
+| Case ID | Unique case reference |
+| Branch | Dhanmondi / Uttara / Mirpur |
+| Complaint Type | Service complaint category |
+| Severity | Priority/severity |
+| Masked Patient Reference | Non-clinical reference |
+| Complaint Summary | Service-related complaint description |
+| Promise / Commitment | What the patient was told |
+| Assigned User | Staff responsible |
+| Status | Current workflow status |
+| Root Cause | Structured cause tag |
+| Created Time | Case creation timestamp |
+| Updated Time | Last update timestamp |
+| Resolution Time | Time taken to resolve |
+| Verification Status | Verified / Not Verified |
 
 ---
 
-## 3. Specific Requirements
+### 7.2 Audit Data
 
-Requirements are numbered `FR-x` (functional) and `NFR-x` (non-functional) for traceability. Priority: **M**ust, **S**hould, **C**ould.
+Audit logs should capture:
 
-### 3.1 Intake & Configuration
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-1 | The agent shall accept a structured intake (per the schema in the companion design spec) describing clinic name, branches, roles, complaint categories, money-flow rules, language, compliance region, and integration targets. | M |
-| FR-2 | The agent shall validate intake and, for any missing optional field, apply a documented safe default (e.g., money flows disabled, patient status view disabled). | M |
-| FR-3 | The agent shall record all applied defaults in a generated README so the clinic operator can review and override them. | M |
-| FR-4 | The agent shall support re-invocation on updated intake (e.g., new branch added) without requiring a full manual rebuild. | S |
-
-### 3.2 Case Management (Generated App Behavior)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-5 | The generated app shall allow front-desk users to create a case with branch, category, severity, promised commitment, and a masked patient reference in under 60 seconds of active input. | M |
-| FR-6 | The generated app shall permanently and immutably record, for every case: what happened, who took each action, and the exact text communicated to the patient. | M |
-| FR-7 | Case records shall be append-only; corrections shall be recorded as new linked entries, never as edits to existing entries. | M |
-| FR-8 | The generated app shall require selection of a root cause from a closed, admin-managed vocabulary before a case can be closed. | M |
-| FR-9 | The generated app shall support an approval workflow for any case involving a monetary remedy (fee waiver, refund, voucher), routed to the role/tier defined in intake. | M |
-| FR-10 | Money amounts shall be excluded from any API response or UI rendering visible to the front-desk role. | M |
-| FR-11 | The generated app shall optionally expose a patient-facing status view, keyed only by reference code, containing no clinical content, if enabled in intake. | C |
-
-### 3.3 Access Control
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-12 | The generated app shall scope front-desk and branch-manager data access to their assigned branch at the data-query layer. | M |
-| FR-13 | The generated app shall grant the quality-lead role cross-branch read access and process-action-authoring rights, with no case-resolution authority. | M |
-| FR-14 | The generated app shall grant the admin role configuration access (roles, vocabulary, categories) with no default access to case content. | M |
-| FR-15 | Role permissions shall be enforced server-side; a client-side-only restriction shall be considered a non-conformance. | M |
-
-### 3.4 AI-Assisted Functions
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-16 | Given complaint text (potentially mixed-language), the runtime AI shall produce a summary, a category suggestion, a root-cause hint, and a draft reply, in the patient's language/register. | M |
-| FR-17 | AI-drafted replies shall require explicit staff review and edit before sending; both the original draft and the final sent text shall be logged. | M |
-| FR-18 | AI root-cause hints shall be presented as editable suggestions only; the agent shall not auto-apply a root cause without staff confirmation. | M |
-| FR-19 | The runtime AI shall scan input text for clinical content (diagnoses, test results, drug names, lab values) before generating a case record and shall block submission with a specific, actionable message if such content is detected. | M |
-| FR-20 | A scheduled background process shall analyze closed cases across branches, cluster them by root cause, branch, and time window, and flag statistically notable spikes. | S |
-| FR-21 | On flagging a spike, the system shall generate a draft process-fix recommendation, visible only to the quality-lead role, without human prompting. | S |
-| FR-22 | No prompt sent to the underlying LLM shall include unmasked patient identity or clinical data. | M |
-
-### 3.5 Compliance & Verification
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-23 | The agent shall run an automated guardrail-verification pass over generated schema, API, and UI layers prior to handoff, confirming Section 3.2–3.4 rules are structurally present. | M |
-| FR-24 | The agent shall produce a compliance report documenting which rules were verified and how (e.g., "money field absent from front-desk serializer: confirmed by response schema diff"). | M |
-| FR-25 | The agent shall run the acceptance scenario in Section 7 against every generated instance and shall not mark generation complete if any check fails. | M |
-
-### 3.7 Root-Level User Experience Requirements
-
-These requirements exist specifically because the front-desk (root-level) user is the primary customer (Section 2.3). They are elevated above general usability polish — the agent must treat them as hard requirements of every generated instance, not stylistic suggestions.
-
-| ID | Requirement | Priority |
-|---|---|---|
-| UX-1 | The front-desk case-entry screen shall be completable using large, thumb/finger-friendly touch targets (minimum 44×44px), suitable for a busy counter on a tablet or low-spec desktop. | M |
-| UX-2 | The front-desk flow shall require **zero training beyond a 5-minute walkthrough** — achieved through visible labels (not icons alone), step-by-step prompts, and no hidden menus for core actions (log case, view status, mark resolved). | M |
-| UX-3 | Category, severity, and root-cause-hint selection shall use tap-to-select chips/buttons, not free-text or multi-level dropdowns, wherever the option set is known. | M |
-| UX-4 | The AI-drafted reply shall be presented in a single editable text box with the draft pre-filled — the front-desk user's job is to *review and tap Send*, not compose from scratch. | M |
-| UX-5 | Every screen shall show a persistent, plain-language indicator of "what happens next" (e.g., "Waiting for manager approval" / "Sent to patient") so the root-level user is never unsure of case state. | M |
-| UX-6 | Error messages shall be written in plain, non-technical language in the clinic's configured language(s), and shall always state the corrective action (e.g., "Please choose a reason — this can't be left blank" rather than "Validation failed: category required"). | M |
-| UX-7 | The interface shall support the clinic's local language as the default display language for the front-desk role, with English as secondary if configured, matching how staff actually speak with patients. | M |
-| UX-8 | The generated app shall tolerate brief network interruptions at the front desk (e.g., local draft retention with retry-on-reconnect) so a counter-side connectivity blip does not lose an in-progress case entry. | S |
-| UX-9 | No front-desk screen shall require more than 3 taps/steps to reach case submission from the home screen. | M |
-| UX-10 | Visual design shall use clear color-coded status states (e.g., open/in-progress/resolved) understandable at a glance, without relying on color alone (icon/label backup for accessibility). | S |
-| UX-11 | The agent shall usability-test (or simulate via heuristic walkthrough) the generated front-desk flow against Section 7's AC-1 timing target (<60 seconds) as part of its self-test pass, not just measure backend latency. | M |
-
-Design rule: **if the agent must choose between a more powerful admin/analytics feature and a simpler front-desk screen, it defaults to the simpler front-desk screen**, consistent with Section 2.3.
-
-### 3.8 Non-Functional Requirements
-
-| ID | Requirement | Priority |
-|---|---|---|
-| NFR-1 | **Performance:** Case creation (front-desk flow) shall complete server-side processing in under 2 seconds under normal load. | M |
-| NFR-2 | **Availability:** The generated app's core case-logging function shall target 99.5% uptime during clinic operating hours. | S |
-| NFR-3 | **Data integrity:** The audit log (CaseEvent, AuditLog tables) shall be tamper-evident; no direct row deletion shall be possible through the application layer. | M |
-| NFR-4 | **Security:** All data in transit shall use TLS; data at rest containing patient reference mappings shall be encrypted. | M |
-| NFR-5 | **Data residency:** The agent shall flag, per the intake's `compliance_region`, any known data-residency expectation for the clinic operator's review (informational, not a legal guarantee). | S |
-| NFR-6 | **Localization:** The generated UI and AI-drafted communications shall support the language(s) specified in intake, including mixed-language input. | M |
-| NFR-7 | **Usability:** The front-desk case-creation form shall require no more than 6 input fields to submit a minimally valid case. See Section 3.7 (UX-1–UX-11) for the full root-level-user experience requirement set, which takes precedence over other UI considerations. | M |
-| NFR-8 | **Auditability:** Every AI-generated suggestion (draft reply, root-cause hint, trend flag) shall be distinguishable in storage from human-entered content. | M |
-| NFR-9 | **Extensibility:** New complaint categories and root causes shall be addable by an admin without a code deployment. | S |
-| NFR-10 | **Portability:** The generated deployment package shall run in both cloud and on-prem container environments without code changes. | C |
+- Login activity where supported
+- Case creation
+- Case update
+- Assignment change
+- Approval
+- Rejection
+- Compensation request
+- Communication edit
+- Communication sent
+- Root-cause assignment
+- Closure
+- Verification
 
 ---
 
-## 4. External Interface Requirements
+### 7.3 Financial Data
 
-### 4.1 User Interfaces
-- Front-desk case-entry form (desktop/tablet), optimized for speed.
-- Branch-manager dashboard: volume, average resolution time, verified-vs-merely-closed rate, approvals queue.
-- Quality-lead dashboard: cross-branch trend view, flagged clusters, process-fix draft review.
-- Optional patient status page: reference-code entry, non-clinical status only.
+Financial remedy records may include:
 
-### 4.2 Software Interfaces
-- **LLM API**: for summarization, categorization, drafting, and trend-flag narrative generation. Called with masked/non-clinical payloads only (FR-22).
-- **Optional LIS/LIMS read-only feed**: report-ready boolean status only; no test values ingested.
-- **Notification channel** (SMS/email/call-log, per clinic preference): for sending approved patient communications, configured but not mandated by this SRS.
-- **Internal REST API**: see Section 8 for the full endpoint-level contract (routes, roles, request/response shapes, error codes).
+- Remedy type
+- Requested amount
+- Approved amount
+- Approver
+- Approval date
+- Approval status
 
-### 4.3 Communications Interfaces
-- All API traffic over HTTPS.
-- Internal service-to-service calls (if the generated app is multi-service) authenticated via signed service tokens.
+Access shall be limited to authorized management users.
 
 ---
 
-## 5. Data Requirements
+## 8. Workflow Requirements
 
-### 5.1 Core Entities
-See companion design spec Section 7 for full schema (`Branch`, `User`, `Case`, `CaseEvent`, `Approval`, `RootCause`, `CaseRootCause`, `TrendFlag`, `AuditLog`).
+### 8.1 Standard Complaint Workflow
 
-### 5.2 Data Constraints
-- DC-1: No entity in the generated schema shall include a field typed or named for diagnosis, test result, or clinical measurement.
-- DC-2: `Case.patient_ref_code` shall be a generated, non-reversible-by-default reference, distinct from any clinical MRN.
-- DC-3: `Approval.amount` shall be excluded from any serializer used by the front-desk role.
-- DC-4: `CaseEvent` rows shall be immutable once written (insert-only at the storage layer).
-
-### 5.3 Data Retention
-- Retention periods shall be configurable per `compliance_region` in intake; the agent shall apply a conservative default (e.g., retain audit trail indefinitely, archive after a configurable inactive period) and document it in the generated README.
-
----
-
-## 6. Constraints, Assumptions, and Dependencies
-
-- **Constraint:** The agent must not generate any design permitting clinical data to reach the complaint system, even transitively (e.g., via free-text fields or unmasked identifiers).
-- **Constraint:** Money-approval authority must map to the tiers defined in intake; the agent shall not hardcode approval thresholds.
-- **Assumption:** The clinic operator reviews and confirms the generated README's list of applied defaults before go-live.
-- **Dependency:** Availability of an LLM API for the runtime AI subsystem; if unavailable, the generated app shall degrade to manual-only case entry (no drafting/trend features) rather than fail entirely.
-
----
-
-## 7. Acceptance Criteria
-
-A generated instance is accepted only if all of the following pass (mirrors the demo scenario in the companion design spec):
-
-1. AC-1: Front desk logs a report-delay case with masked reference in under 60 seconds.
-2. AC-2: AI drafts a reply; staff edits a detail; both draft and sent versions are retained in `CaseEvent`.
-3. AC-3: Case is closed with a root-cause tag from the closed vocabulary.
-4. AC-4: Three similar cases at one branch, same root cause, within a defined window, trigger a `TrendFlag` with a drafted process-fix, visible only to quality lead.
-5. AC-5: A test submission containing a diagnosis-like term is rejected by the firewall with a specific, actionable message.
-6. AC-6: A front-desk API response for a case with an approved refund contains no `amount` field.
-7. AC-7: A branch manager can, for any given case, retrieve resolution status and the exact text sent to the patient in a single view.
-8. AC-8: A first-time front-desk user, given only a 5-minute walkthrough, completes case creation end-to-end without assistance.
-9. AC-9: Case submission from the front-desk home screen is reachable in 3 taps/steps or fewer.
-10. AC-10: All front-desk error states display plain-language, corrective-action messages in the clinic's configured local language.
-
----
-
-## 8. API Contract
-
-This section specifies the concrete REST API surface engineers implement against. All endpoints are versioned under `/api/v1/`. All responses are JSON. All endpoints require an `Authorization: Bearer <token>` header except `POST /auth/login`.
-
-### 8.1 Conventions
-- Standard error envelope:
-```json
-{ "error": { "code": "STRING_CODE", "message": "human-readable, plain language", "field": "optional_field_name" } }
+```text
+Patient / Family Complaint
+        |
+        v
+Front Desk Creates Case
+        |
+        v
+AI Assists with Summary / Category / Reply
+        |
+        v
+Staff Reviews and Edits
+        |
+        v
+Action / Investigation
+        |
+        v
+Resolution
+        |
+        v
+Root Cause Tagged
+        |
+        v
+Patient Informed
+        |
+        v
+Resolution Verified
+        |
+        v
+Case Closed
 ```
-- Standard HTTP codes: `200` success, `201` created, `400` validation error, `401` unauthenticated, `403` role-forbidden, `404` not found, `409` conflict (e.g., case already closed), `422` firewall-blocked content, `500` server error.
-- Pagination: `?page=1&page_size=25`, response includes `{ "items": [...], "total": N, "page": N }`.
-- All list/detail endpoints apply role-based row filtering server-side (FR-12, FR-13, FR-15) before any other query logic runs — filtering is never optional or client-supplied.
-
-### 8.2 Authentication & Session
-
-| Method | Path | Description |
-|---|---|---|
-| POST | `/auth/login` | Body: `{ username, password }` or clinic-configured SSO token exchange. Returns `{ access_token, refresh_token, role, branch_id }`. |
-| POST | `/auth/refresh` | Body: `{ refresh_token }`. Returns new `access_token`. |
-| POST | `/auth/logout` | Invalidates refresh token server-side. |
-
-### 8.3 Case Endpoints
-
-| Method | Path | Role(s) | Description |
-|---|---|---|---|
-| POST | `/cases` | front_desk, branch_manager | Create a case. Body validated against DC-1/DC-2; text fields pass through the firewall scan (FR-19) before insert — a block returns `422` with `error.code = "CLINICAL_CONTENT_DETECTED"` and a specific `message`. |
-| GET | `/cases` | all (row-filtered by role) | List cases. `front_desk`/`branch_manager` auto-filtered to `branch_id`; `quality_lead` sees all; response **omits `amount` fields entirely for `front_desk`** (not just nulled — key absent from payload, per DC-3/FR-10). |
-| GET | `/cases/{id}` | all (row-filtered) | Case detail including `CaseEvent` history. Same amount-field omission rule applies. |
-| POST | `/cases/{id}/events` | front_desk, branch_manager | Append an action/note. Firewall-scanned. Append-only — no PUT/PATCH/DELETE exists on this resource (DC-4). |
-| POST | `/cases/{id}/ai-draft` | front_desk, branch_manager | Requests AI summary/category/root-cause-hint/reply draft for the case (FR-16). Returns draft text; **does not** write to `CaseEvent` — that only happens on `/send`. |
-| POST | `/cases/{id}/send-reply` | front_desk, branch_manager | Sends the (possibly edited) reply. Body: `{ draft_text, final_text }`. Both are persisted to `CaseEvent` (FR-17). |
-| POST | `/cases/{id}/close` | front_desk, branch_manager | Body: `{ root_cause_id }`, required (FR-8). Returns `409` if `root_cause_id` missing or case already closed. |
-
-### 8.4 Approval Endpoints
-
-| Method | Path | Role(s) | Description |
-|---|---|---|---|
-| POST | `/cases/{id}/approvals` | front_desk (request only, no amount visibility on response), branch_manager, quality_lead | Request a monetary remedy. Body: `{ amount, amount_type }`. Response to `front_desk` caller omits `amount` (echo suppressed) — confirmation is by `approval_id` and status only. |
-| POST | `/approvals/{id}/decision` | branch_manager (within tier), quality_lead | Body: `{ decision: "approved"|"rejected", note }`. Enforces tier limits from intake — request above a role's configured max returns `403` with `error.code = "APPROVAL_TIER_EXCEEDED"`. |
-
-### 8.5 Root Cause & Trend Endpoints
-
-| Method | Path | Role(s) | Description |
-|---|---|---|---|
-| GET | `/root-causes` | all | List active closed-vocabulary root causes for the clinic. |
-| POST | `/root-causes` | admin | Add a new root cause (NFR-9). |
-| GET | `/trends/flags` | quality_lead only | List `TrendFlag` records with drafted process-fix text. `403` for all other roles. |
-| POST | `/trends/flags/{id}/action` | quality_lead only | Mark a flag as actioned/dismissed, with note. |
-
-### 8.6 Dashboard Endpoints
-
-| Method | Path | Role(s) | Description |
-|---|---|---|---|
-| GET | `/dashboard/branch/{branch_id}` | branch_manager (own branch), quality_lead (any) | Volume, avg resolution time, verified-vs-merely-closed rate, open approvals. |
-| GET | `/dashboard/cross-branch` | quality_lead only | Aggregate + per-branch comparison, failure-mode trend chart data. |
 
 ---
 
-## 9. Security Requirements & Threat Model
+### 8.2 Financial Remedy Workflow
 
-### 9.1 Authentication & Authorization
-- SEC-1: All users authenticate via credentials or clinic-configured SSO; no shared/generic logins per branch (M).
-- SEC-2: Access tokens shall be short-lived (≤15 min); refresh tokens shall be revocable server-side on logout or admin-forced revocation (M).
-- SEC-3: Role and branch scope shall be embedded in the server-issued token and re-validated on every request — never trusted from client-supplied headers or request bodies (M).
-- SEC-4: Failed login attempts shall be rate-limited per account and per source IP to mitigate credential-stuffing (M).
-
-### 9.2 Data Protection
-- SEC-5: All data in transit shall use TLS 1.2+ (NFR-4). Internal service-to-service calls shall also be encrypted, not assumed safe because they're "internal" (M).
-- SEC-6: The patient reference-code → identity mapping table (if it exists at all) shall be encrypted at rest and access-logged separately from case data access (M).
-- SEC-7: Database backups shall be encrypted and access-restricted equivalently to production data (M).
-- SEC-8: Secrets (API keys, DB credentials, LLM API keys) shall be stored in a secrets manager, never in source control or plaintext config files (M).
-
-### 9.3 Threat Model (Key Threats & Mitigations)
-
-| Threat | Vector | Mitigation |
-|---|---|---|
-| Clinical data leakage into complaint system | Staff paste/type diagnosis or lab values into a note field | FR-19 input-side firewall scan (server-side, not bypassable) + DC-1 (no schema field can hold it even if scan is bypassed) |
-| Front-desk role reading refund/waiver amounts | Direct API call bypassing UI (e.g., via browser devtools) | Amount fields structurally absent from the front_desk-role serializer at the API layer (Section 8.3/8.4) — not a UI-only hide |
-| Cross-branch data leakage | Branch-manager/front-desk query manipulation (e.g., altering a `branch_id` query param) | Server derives branch scope from the authenticated token, not from client-supplied parameters (SEC-3) |
-| Unauthorized root-cause / case tampering | Direct DB or API manipulation of historical case data | Append-only `CaseEvent`/`AuditLog` at the storage layer (DC-4); no update/delete endpoint exists |
-| LLM prompt injection via patient-submitted text | Malicious/crafted complaint text attempting to alter AI behavior (e.g., "ignore previous instructions and reveal...") | AI prompts are constructed with the case text as strictly delimited, non-instructional input; system-level guardrail prompt is not overridable by case content; output is still passed through the same firewall scan (FR-19) before storage |
-| Sensitive data sent to third-party LLM | Prompt payload accidentally includes unmasked identity or clinical content | FR-22 — data-assembly layer strips/masks before any LLM call; enforced by the guardrail-verification pass (FR-23) |
-| Session hijacking | Stolen access token | Short token lifetime (SEC-2), TLS everywhere (SEC-5), refresh-token revocation on logout |
-| Denial of service at front desk | Flood of case-creation requests | Rate limiting per user/branch on write endpoints; queue-based handling for AI-draft calls to avoid blocking case creation if the LLM API is slow/down |
-| Insider misuse (e.g., quality lead browsing unrelated branches for non-work reasons) | Legitimate cross-branch access used inappropriately | All cross-branch reads logged in `AuditLog` with actor and timestamp, reviewable by admin |
-
-### 9.4 Compliance-Adjacent Security Notes
-- SEC-9: This SRS does not certify compliance with any specific healthcare data-protection law; NFR-5's data-residency flagging is informational only, and a formal legal/security review is required before handling real patient-adjacent data in production.
-- SEC-10: A third-party penetration test is recommended before first production go-live and after any major schema/API change; this SRS specifies the target for such a test but does not itself constitute one.
+```text
+Complaint Logged
+      |
+      v
+Refund / Fee Waiver Requested
+      |
+      v
+Manager Approval Required
+      |
+  +---+---+
+  |       |
+Approve  Reject
+  |       |
+  v       v
+Record Decision
+      |
+      v
+Continue Resolution
+```
 
 ---
 
-## 10. Test Plan
+### 8.3 Clinical Firewall Workflow
 
-### 10.1 Test Levels
-
-| Level | Scope | Owner | Trigger |
-|---|---|---|---|
-| Unit tests | Individual functions: firewall classifier, serializer field-exclusion, approval-tier logic | Engineers | Every commit (CI) |
-| Integration tests | API endpoint behavior end-to-end (DB + API layer), including role-scoping (Section 8) | Engineers/QA | Every PR merge |
-| Guardrail-verification pass | Automated check that Section 3/9 structural rules are present in the generated build (FR-23) | Agent (self-test) | Every generation run |
-| Acceptance testing | Section 7's AC-1 through AC-10 scenarios, run end-to-end against a deployed instance | QA | Before handoff / before each release |
-| Usability testing | UX-1 through UX-11, including AC-8/AC-9 timing and first-use checks | QA + real front-desk staff (or proxy users) | Before first production go-live, then periodically |
-| Load/performance testing | NFR-1 (<2s case creation), NFR-2 (99.5% uptime target) under simulated concurrent branch traffic | Engineers/QA | Before go-live; after major architecture change |
-| Security testing | SEC-1 through SEC-10, including the threat-model table (9.3) | Security reviewer / third-party pen test | Before go-live; after major change |
-
-### 10.2 Illustrative Test Cases (Non-Exhaustive)
-
-| Test ID | Maps to | Test description | Expected result |
-|---|---|---|---|
-| T-01 | FR-19, SEC-3 (threat row 1) | Submit a case note containing a diagnosis term | `422 CLINICAL_CONTENT_DETECTED` with actionable message; no case created |
-| T-02 | FR-10, DC-3 | `front_desk` role calls `GET /cases/{id}` on a case with an approved refund | Response JSON has no `amount` key anywhere in the payload |
-| T-03 | FR-12, SEC-3 | `front_desk` user from Branch A requests `GET /cases?branch_id=B` (Branch B) | Returns only Branch A cases (server ignores/overrides the client-supplied `branch_id`), or `403` |
-| T-04 | DC-4 | Attempt `PUT`/`PATCH`/`DELETE` on `/cases/{id}/events/{event_id}` | `404`/`405` — no such endpoint exists |
-| T-05 | FR-8 | `POST /cases/{id}/close` with no `root_cause_id` | `409` with message requiring root cause selection |
-| T-06 | FR-17 | `POST /cases/{id}/send-reply` with edited `final_text` different from `draft_text` | Both versions persisted and independently retrievable in case history |
-| T-07 | UX-9, AC-9 | Manual/scripted walkthrough of front-desk home → case submitted | ≤3 taps/steps counted |
-| T-08 | FR-20/21, AC-4 | Seed 3 same-root-cause cases at one branch within the trend window | `TrendFlag` created with a non-empty drafted process-fix; visible only via `quality_lead` token |
-| T-09 | SEC-2 | Use an access token after its expiry window | `401`, forced re-auth via refresh token |
-| T-10 | SEC-4 | Submit 10+ rapid failed logins for one account | Subsequent attempts rate-limited/locked per policy |
-| T-11 | Threat row 6 (prompt injection) | Submit complaint text containing an instruction-like string aimed at the LLM (e.g., attempting to make it reveal system prompt or ignore firewall) | AI output still passes firewall scan; no system-prompt leakage; behavior unchanged from a normal complaint |
-| T-12 | NFR-1 | Load-test 100 concurrent case-creation requests across branches | 95th percentile response time remains under 2 seconds |
-
-### 10.3 Exit Criteria for Production Readiness
-A build is considered ready for production go-live only when:
-1. All Section 7 acceptance criteria (AC-1–AC-10) pass on a staging deployment.
-2. All Section 9 security requirements (SEC-1–SEC-10) are verified, with pen-test findings (if any) resolved or formally risk-accepted by the clinic operator.
-3. Load testing confirms NFR-1/NFR-2 targets under an agreed concurrent-user estimate for the clinic's actual branch/patient volume.
-4. Usability testing (Section 3.7) has been performed with at least one real or representative front-desk user per language configured in intake.
-5. A legal/compliance reviewer has signed off per SEC-9 for the clinic's jurisdiction.
+```text
+Staff Enters Complaint Note
+        |
+        v
+Clinical Content Check
+        |
+   +----+----+
+   |         |
+No Clinical  Clinical Data
+Data         Detected
+   |         |
+   v         v
+Save      Block / Warn
+             |
+             v
+         Rewrite Note
+```
 
 ---
 
-## 11. Appendix: Traceability to Source Case
+## 9. Non-Functional Requirements
 
-| Source case requirement | SRS requirement(s) |
+### NFR-01: Usability
+A trained front-desk user should be able to create a normal service case in under one minute.
+
+### NFR-02: Performance
+Common case pages and dashboards should load within an acceptable operational response time under normal use.
+
+### NFR-03: Availability
+The complaint-management service should be available during clinic operating hours.
+
+### NFR-04: Scalability
+The configured platform should support multiple clinic branches and growing complaint volumes.
+
+### NFR-05: Auditability
+Important actions must be traceable to a specific user and timestamp.
+
+### NFR-06: Data Minimization
+Only information necessary for service recovery shall be collected.
+
+### NFR-07: Privacy
+Patient identity shall be masked in normal operational lists and analytics.
+
+### NFR-08: Security
+The system shall enforce authenticated access and role-based permissions.
+
+### NFR-09: Confidentiality
+Management-only information such as compensation values shall not be exposed to unauthorized users.
+
+### NFR-10: Data Integrity
+Authorized users shall not be able to silently alter the historical record of what was communicated or approved.
+
+### NFR-11: Maintainability
+Complaint categories, root-cause tags, users, branches, and workflows should be configurable without rebuilding the whole system.
+
+### NFR-12: Language Support
+The solution should support Bangla-English complaint text where possible.
+
+---
+
+## 10. Security Requirements
+
+### SEC-01
+All internal users shall authenticate before accessing the system.
+
+### SEC-02
+Access shall follow least-privilege principles.
+
+### SEC-03
+Users shall only see branch and case data permitted by their role.
+
+### SEC-04
+Patient identity shall be masked wherever full identity is not operationally required.
+
+### SEC-05
+Clinical information shall not be stored in complaint records.
+
+### SEC-06
+Compensation information shall be restricted to management.
+
+### SEC-07
+Important administrative and case actions shall be auditable.
+
+### SEC-08
+AI outputs shall require human review before external communication.
+
+### SEC-09
+The system should protect complaint records from unauthorized deletion or modification.
+
+### SEC-10
+Analytics should use masked or non-clinical data.
+
+---
+
+## 11. Reporting Requirements
+
+### 11.1 Branch Reports
+
+The system should generate reports for:
+
+- Total cases
+- Cases by complaint type
+- Cases by severity
+- Average resolution time
+- Open / overdue cases
+- Verified-resolution rate
+- Root-cause frequency
+
+### 11.2 Cross-Branch Reports
+
+The quality lead should be able to compare:
+
+- Branch complaint volume
+- Root causes
+- Failure modes
+- Resolution time
+- Verification rate
+- Operational spikes
+
+---
+
+## 12. Existing Software Solution Implementation
+
+Because the system was implemented using an existing software solution, the implementation should map the requirements to available platform components.
+
+| Requirement | Existing Platform Implementation |
 |---|---|
-| Log a case in under a minute | FR-5, NFR-7 |
-| Show what happened / who acted / what was said, forever | FR-6, FR-7, NFR-3 |
-| Approvals where money involved, hidden from front desk | FR-9, FR-10, DC-3 |
-| Root-cause tagging on closure | FR-8 |
-| Branch and cross-branch performance views | FR-12, FR-13, AC-7 |
-| Enforced clinical/complaint firewall | FR-19, FR-22, DC-1, AC-5 |
-| AI drafts summary/category/root-cause/reply for approval | FR-16–FR-18 |
-| AI proactively surfaces cross-branch root-cause clusters | FR-20, FR-21, AC-4 |
-| Root-level (front-desk) user is the primary customer; must be highly user-friendly | Section 2.3, UX-1–UX-11, NFR-7, AC-8, AC-9, AC-10 |
+| User authentication | Existing platform login / identity feature |
+| Role-based access | Platform roles and permissions |
+| Case creation | Configured form / record type |
+| Complaint workflow | Workflow / status configuration |
+| Approval | Existing approval workflow |
+| Audit history | Platform history / activity log |
+| Dashboards | Built-in reporting / dashboard module |
+| Root-cause tags | Choice / tag / category field |
+| Notifications | Platform automation / notification feature |
+| AI summary | AI assistant / integration where supported |
+| AI reply | AI generation feature / integration |
+| Clinical firewall | Validation / DLP / AI-assisted rule |
+| Cross-branch trend view | Reporting / analytics module |
+
+### 12.1 Configuration-First Principle
+
+The implementation should prioritize configuration over custom development.
+
+Custom code should only be introduced when the existing platform cannot meet a mandatory requirement such as:
+
+- Clinical-data prevention
+- AI pattern detection
+- Specific access restrictions
+- Advanced integration
+- Custom analytics
+
+---
+
+## 13. Assumptions
+
+- Clinic branches use the same complaint process.
+- Staff users have individual accounts.
+- Management roles are clearly defined.
+- The existing platform supports configurable forms and permissions.
+- The existing platform supports a usable audit trail.
+- AI features are subject to staff review.
+- Clinical information is handled by separate clinical systems.
+- Complaint records contain service information only.
+
+---
+
+## 14. Constraints
+
+- Clinical data must not leak into the complaint system.
+- Full patient identity should not appear in normal analytics.
+- Compensation amounts are restricted.
+- AI must not autonomously communicate with patients without human approval.
+- Existing software-platform limitations may affect the exact UI or workflow.
+- Any implementation gap must be documented rather than silently ignored.
+
+---
+
+## 15. Demo Scenario / Acceptance Scenario
+
+### Scenario
+A daughter calls because her father's CBC and HbA1c reports were promised at 2:00 PM but are still not ready at 5:00 PM.
+
+### Expected System Behaviour
+
+1. Front-desk staff creates the case in approximately 30 seconds.
+2. The branch is recorded.
+3. The complaint is categorized as report delay.
+4. The patient is represented by a masked reference.
+5. The AI creates a short summary.
+6. The AI drafts a respectful reply.
+7. Staff reviews the draft.
+8. Staff changes the commitment if necessary.
+9. The final communication is permanently logged.
+10. Investigation identifies the root cause as sample mix-up.
+11. Root cause is tagged.
+12. Case is resolved and later verified.
+13. The cross-branch dashboard identifies if similar sample mix-ups are increasing at Dhanmondi.
+14. The quality lead creates a corrective process action such as double-labeling at collection.
+15. If a user attempts to enter a diagnosis into the complaint note, the clinical firewall blocks or warns against it.
+
+---
+
+## 16. Acceptance Criteria
+
+The solution shall be considered successful when:
+
+- Staff can create a complaint quickly.
+- Every complaint has an identifiable owner and status.
+- The exact patient commitment is recorded.
+- Complaint history is traceable.
+- Financial remedies require authorization.
+- Management-only financial information is protected.
+- Root causes can be counted and analyzed.
+- Branch managers can measure actual resolution performance.
+- The quality lead can identify recurring cross-branch failures.
+- Clinical information is prevented from entering complaint records.
+- AI assists staff without bypassing human approval.
+- A complaint can be differentiated as merely closed versus actually verified.
+- Operational failure patterns can be identified before the next formal review.
+
+---
+
+## 17. Success Definition
+
+A successful implementation allows a branch manager to answer:
+
+> Was this complaint actually resolved, and what exactly was the patient told?
+
+It also allows the quality lead to identify a recurring operational failure early enough to take corrective action before it becomes a larger patient-safety, reputational, or regulatory issue.
+
+---
+
+## 18. Future Enhancements
+
+Possible future improvements include:
+
+- Patient self-service status page
+- SMS / WhatsApp integration
+- Email notifications
+- SLA timers
+- Automatic escalation
+- Sentiment detection
+- Multilingual AI responses
+- Automated trend alerts
+- Root-cause recommendation confidence score
+- Integration with non-clinical CRM data
+- Management notification for high-severity complaints
+- Corrective-action tracking
+- Branch benchmarking
+
+---
+
+## 19. Requirement Traceability Summary
+
+| Area | Main Requirements |
+|---|---|
+| Case Management | FR-03 to FR-09 |
+| Financial Approval | FR-10 to FR-11 |
+| Root Cause & Quality | FR-12 to FR-16 |
+| Clinical Data Protection | FR-17 to FR-19 |
+| AI Assistance | AI-01 to AI-08 |
+| Security | SEC-01 to SEC-10 |
+| Reporting | Section 11 |
+| Existing Platform Mapping | Section 12 |
+| Acceptance | Sections 15–16 |
+
+---
+
+## 20. Source Basis
+
+This SRS was prepared from the supplied **ChikitsaFollow: Clinic Follow-up and Service Recovery Desk** case description.
+
+The source defines the business problem, user roles, complaint-management expectations, access model, AI-assistance requirements, clinical-data separation requirement, reporting expectations, and example demo workflow.
+
+Where the source did not specify exact implementation technology, this SRS describes a configuration-based implementation using an existing software solution without inventing a specific vendor or product.

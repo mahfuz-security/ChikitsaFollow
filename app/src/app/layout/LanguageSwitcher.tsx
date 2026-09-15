@@ -10,12 +10,12 @@ import {
 // Hidden until the tenant actually has more than one language configured --
 // a switcher with a single option is dead chrome.
 export function LanguageSwitcher() {
-  const { language, languages, setLanguage } = useT();
+  const { language, languages, setLanguage, t } = useT();
   if (languages.length < 2) return null;
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="icon-button" aria-label="Change language">
+      <DropdownMenuTrigger className="icon-button" aria-label={t("language.change")} title={t("language.change")}>
         <Languages size={18} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[160px]">

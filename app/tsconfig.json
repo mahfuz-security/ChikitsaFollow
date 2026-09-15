@@ -15,6 +15,7 @@
   },
   "include": [
     "src",
+    "server",
     "tailwind.config.ts",
     "vite.config.ts"
   ]

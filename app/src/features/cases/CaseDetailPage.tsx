@@ -1,7 +1,7 @@
-import { ChevronLeft, Send, Sparkles, X } from "lucide-react";
+import { ChevronLeft, CheckCheck, Send, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { tx, useT } from "../../lib/i18n/LocalizationProvider";
-import { hasPermission } from "../../lib/permissions";
+import { hasPermission, isReviewOnlyManager } from "../../lib/permissions";
 import { ActionButton } from "../../shared/ui/ActionButton";
 import { Alert } from "../../shared/ui/Alert";
 import { Modal } from "../../shared/ui/Modal";
@@ -11,8 +11,15 @@ import { StatusPill } from "../../shared/ui/StatusPill";
 import { scanForClinical } from "../ai/firewall";
 import { useCurrentUser } from "../profile/useCurrentUser";
 import { useActiveRootCauses } from "../vocab/useRootCauses";
-import { useAppendCaseEvent, useCase, useCaseEvents, useCloseCase, type CaseRow } from "./useCases";
+import { useAppendCaseEvent, useCase, useCaseEvents, useCloseCase, useVerifyCase, type CaseRow } from "./useCases";
 import { AiDraftReviewDialog } from "./AiDraftReviewDialog";
+import { caseStatusTone } from "./casePresentation";
+import { CaseWorkflow } from "./CaseWorkflow";
+import { CaseNotes } from "./CaseNotes";
+import { CaseRefundStatus } from "../refunds/CaseRefundStatus";
+import { CaseDeadline } from "./CaseDeadline";
+import { TicketThread } from "./TicketThread";
+import { rolesForUser } from "../../lib/roles";
 
 type CaseDetailPageProps = { caseId: string; onNavigate: (path: string) => void };
 
@@ -23,9 +30,13 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
   const events = useCaseEvents(caseId);
   const appendEvent = useAppendCaseEvent();
   const closeCase = useCloseCase();
+  const verify = useVerifyCase();
+  const [verifying, setVerifying] = useState(false);
+  const [verificationNote, setVerificationNote] = useState("");
   const causes = useActiveRootCauses();
 
   const [replyText, setReplyText] = useState("");
+  const [replyRequestId, setReplyRequestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState<string | undefined>();
   const [closing, setClosing] = useState(false);
   const [chosenRootCause, setChosenRootCause] = useState<string | undefined>();
@@ -35,6 +46,7 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
   const canAiDraft = hasPermission(me.data?.data, "case-ai-draft");
   const canSendReply = hasPermission(me.data?.data, "case-send-reply");
   const canClose = hasPermission(me.data?.data, "case-close");
+  const canComment = isReviewOnlyManager(me.data?.data) && hasPermission(me.data?.data, "case-event-create");
 
   async function handleSendReply() {
     setError(undefined);
@@ -50,12 +62,14 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
     try {
       await appendEvent.mutateAsync({
         caseId,
-        eventType: "sent_reply",
+        eventType: canComment ? "note" : "sent_reply",
+        requestId: replyRequestId,
         actorUserId: me.data?.data?.itemId ?? "unknown",
         text: replyText.trim(),
         aiGenerated: false
       });
       setReplyText("");
+      setReplyRequestId(crypto.randomUUID());
     } catch (caught) {
       const err = caught as { message?: string };
       setError(err?.message || t("cases.detail.replyFailed"));
@@ -111,7 +125,7 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
         title={`${t("cases.detail.title")} · ${c.PatientRefCode ?? ""}`}
         subtitle={c.Subject ?? ""}
         actions={
-          <ActionButton onClick={() => onNavigate("/cases")}>
+          <ActionButton variant="ghost" onClick={() => onNavigate("/cases")}>
             <ChevronLeft size={18} />
             {t("common.back")}
           </ActionButton>
@@ -119,8 +133,9 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
       />
 
       <div className="panel">
+        {c.Category === "billing" && rolesForUser(me.data?.data).some(role => ["front_desk", "branch_manager", "admin", "clouduser"].includes(role)) ? <CaseRefundStatus caseId={caseId} /> : null}
         <div className="case-meta">
-          <div><span className="muted">{t("cases.colStatus")}: </span><StatusPill tone={c.Status === "closed" ? "good" : "warn"}>{c.Status ?? "—"}</StatusPill></div>
+          <div><span className="muted">{t("cases.colStatus")}: </span><StatusPill tone={caseStatusTone(c.Status)}>{c.Status ? t(tx(`cases.status.${c.Status}`)) : "—"}</StatusPill></div>
           <div><span className="muted">{t("cases.colCategory")}: </span>{c.Category ? t(tx(`cases.category.${c.Category}`)) : "—"}</div>
           <div><span className="muted">{t("cases.colSeverity")}: </span>{c.Severity ?? "—"}</div>
           {c.PromisedAt ? <div><span className="muted">{t("cases.detail.promisedAt")}: </span>{new Date(c.PromisedAt).toLocaleString()}</div> : null}
@@ -134,28 +149,35 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
             </ActionButton>
           </div>
         ) : null}
+        {hasPermission(me.data?.data, "case-update") ? <CaseWorkflow row={c} /> : null}
+        {hasPermission(me.data?.data, "case-update") && ["open", "in_progress", "awaiting_approval"].includes(c.Status ?? "") ? <CaseDeadline caseId={caseId} /> : null}
+        {!canComment && hasPermission(me.data?.data, "case-event-create") ? <CaseNotes caseId={caseId} /> : null}
 
-        {canSendReply ? (
+        {canComment ? (
           <div className="reply-box">
+            <p className="muted">{t("tickets.internalNotice")}</p>
             <label className="form-field">
-              <span>{t("cases.detail.replyLabel")}</span>
+              <span>{t(canComment ? "cases.review.comment" : "cases.detail.replyLabel")}</span>
               <textarea
                 rows={3}
                 value={replyText}
                 onChange={(event) => setReplyText(event.target.value)}
-                placeholder={t("cases.detail.replyPlaceholder")}
+                placeholder={canComment ? undefined : t("cases.detail.replyPlaceholder")}
+                maxLength={canComment ? 500 : undefined}
+                disabled={appendEvent.isPending}
               />
             </label>
             <ActionButton onClick={handleSendReply} disabled={appendEvent.isPending || !replyText.trim()}>
               <Send size={18} />
-              {t("cases.detail.sendReply")}
+              {t(canComment ? "cases.review.addComment" : "cases.detail.sendReply")}
             </ActionButton>
           </div>
         ) : null}
 
-        {canClose && c.Status !== "closed" ? (
+        {hasPermission(me.data?.data, "case-verify") && ["closed", "resolved"].includes(c.Status ?? "") ? <ActionButton variant="secondary" onClick={() => setVerifying(true)} icon={<CheckCheck size={18} />}>{t("cases.detail.verify")}</ActionButton> : null}
+        {canClose && c.Status !== "closed" && c.Status !== "verified" ? (
           <div className="row-actions">
-            <ActionButton onClick={() => setClosing(true)}>
+            <ActionButton variant="secondary" onClick={() => setClosing(true)}>
               <X size={18} />
               {t("cases.detail.closeCta")}
             </ActionButton>
@@ -165,6 +187,7 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
         {error ? <Alert tone="error">{error}</Alert> : null}
       </div>
 
+      <TicketThread key={caseId} caseId={caseId} />
       <div className="panel">
         <div className="panel-title">{t("cases.detail.history")}</div>
         {events.isLoading ? (
@@ -178,8 +201,11 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
                 <div className="event-head">
                   <strong>{t(tx(`cases.event.${event.EventType ?? "note"}`))}</strong>
                   {event.AiGenerated ? <StatusPill tone="neutral">AI</StatusPill> : null}
+                  {event.CreatedDate ? <time dateTime={event.CreatedDate} className="muted">{new Date(event.CreatedDate).toLocaleString()}</time> : null}
                 </div>
                 {event.Text ? <p>{event.Text}</p> : null}
+                {event.ActorUserId ? <small className="muted">{event.ActorUserId}</small> : null}
+                {event.EventType === "created" ? <Commitment metadata={event.MetadataJson} /> : null}
               </li>
             ))}
           </ol>
@@ -203,7 +229,7 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
           </label>
           {error ? <Alert tone="error">{error}</Alert> : null}
           <div className="row-actions">
-            <ActionButton onClick={() => setClosing(false)}>{t("common.cancel")}</ActionButton>
+            <ActionButton variant="ghost" onClick={() => setClosing(false)}>{t("common.cancel")}</ActionButton>
             <ActionButton onClick={handleConfirmClose} disabled={closeCase.isPending}>
               {closeCase.isPending ? t("common.saving") : t("cases.detail.confirmClose")}
             </ActionButton>
@@ -211,7 +237,19 @@ export function CaseDetailPage({ caseId, onNavigate }: CaseDetailPageProps) {
         </Modal>
       ) : null}
 
+      {verifying ? <Modal title={t("cases.detail.verify")} onClose={() => setVerifying(false)}><form onSubmit={async event => {
+        event.preventDefault();
+        try { await verify.mutateAsync({ caseId, note: verificationNote }); setVerifying(false); } catch { /* Mutation error is rendered below. */ }
+      }}><label className="form-field"><span>{t("cases.detail.verifyNote")}</span><textarea rows={3} value={verificationNote} maxLength={500} onChange={event => setVerificationNote(event.target.value)} required disabled={verify.isPending} /></label>{verify.isError ? <Alert tone="error">{verify.error.message}</Alert> : null}<ActionButton type="submit" disabled={!verificationNote.trim() || verify.isPending}>{t(verify.isPending ? "common.saving" : "cases.detail.verify")}</ActionButton></form></Modal> : null}
       {draftDialogOpen ? <AiDraftReviewDialog caseRow={c} onClose={() => setDraftDialogOpen(false)} /> : null}
     </section>
   );
+}
+
+function Commitment({ metadata }: { metadata?: string }) {
+  const { t } = useT();
+  try {
+    const value = JSON.parse(metadata ?? "{}").commitment;
+    return typeof value === "string" && value ? <p><strong>{t("cases.event.commitment")}: </strong>{value}</p> : null;
+  } catch { return null; }
 }

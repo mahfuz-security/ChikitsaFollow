@@ -1,3 +1,4 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { blocksClient } from "../../lib/blocks/client";
 
@@ -28,7 +29,7 @@ export function useOrganizationMembersForOrg(orgId: string | undefined) {
   return useQuery({
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("OrganizationMember").list({
+      const response = (await gatewayCollection("OrganizationMember").list({
         filter: { OrgId: orgId },
         pageNo: 1,
         pageSize: 200
@@ -43,7 +44,7 @@ export function useOrganizationMembersForUser(userId: string | undefined) {
   return useQuery({
     enabled: Boolean(userId),
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("OrganizationMember").list({
+      const response = (await gatewayCollection("OrganizationMember").list({
         filter: { UserId: userId },
         pageNo: 1,
         pageSize: 50
@@ -77,7 +78,7 @@ export function useAddOrganizationMember() {
   return useMutation({
     mutationFn: async (input: AddMembershipInput) => {
       if (isSingleOrgRole(input.roleSlug)) {
-        const existing = (await blocksClient.data.collection("OrganizationMember").list({
+        const existing = (await gatewayCollection("OrganizationMember").list({
           filter: { Status: "active", UserId: input.userId },
           pageNo: 1,
           pageSize: 50
@@ -98,7 +99,7 @@ export function useAddOrganizationMember() {
         Source: input.source
       };
       if (input.invitedByUserId) row.InvitedByUserId = input.invitedByUserId;
-      const result = await blocksClient.data.collection("OrganizationMember").create(row);
+      const result = await gatewayCollection("OrganizationMember").create(row);
       return result as OrganizationMemberRow;
     },
     onSuccess: (_data, variables) => {

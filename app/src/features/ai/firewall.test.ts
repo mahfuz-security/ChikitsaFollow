@@ -4,6 +4,13 @@ import { scanForClinical } from "./firewall";
 // AC-5: Subject = "creatinine 1.4 mg/dL" must trip the firewall before submit.
 
 describe("scanForClinical", () => {
+  it("allows delayed test names but blocks English and Bangla result disclosures", () => {
+    expect(scanForClinical("CBC and HbA1c reports were not delivered by the promised time.").ok).toBe(true);
+    expect(scanForClinical("MRI report was delayed").ok).toBe(true);
+    expect(scanForClinical("The patient has diabetes and the HbA1c result is 8.5.").ok).toBe(false);
+    expect(scanForClinical("রোগীর ডায়াবেটিস আছে").ok).toBe(false);
+    expect(scanForClinical("শর্করা ৮.৫").ok).toBe(false);
+  });
   it("returns ok for plain service-experience text", () => {
     expect(scanForClinical("Long wait at the front desk and the receptionist was rude")).toEqual({ ok: true });
     expect(scanForClinical("The bill was higher than quoted")).toEqual({ ok: true });

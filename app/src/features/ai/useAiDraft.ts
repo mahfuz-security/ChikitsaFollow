@@ -1,35 +1,27 @@
 import { useMutation } from "@tanstack/react-query";
-import { toLlmSafeSummary } from "../cases/serializers";
 import type { CaseRow } from "../cases/useCases";
+import { useT } from "../../lib/i18n/LocalizationProvider";
+import { DRAFT_CATEGORIES, draftTemplate } from "./draftTemplate";
 
-// FR-16, FR-17, FR-22: produce an AI-drafted reply for a case. The real
-// implementation will call an LLM; this stub returns a canned response
-// derived from non-PII fields only. The useAiDraft hook wires up the
-// CaseEvent append (`ai_draft`) so the history reflects what was
-// generated, and the eventual Sent Reply becomes a second event.
-const STUB_TEMPLATE = (category: string, severity: string) =>
-  `Thank you for letting us know about your ${category} concern. ` +
-  `We take ${severity.toLowerCase()}-severity feedback seriously and ` +
-  `a member of our team will follow up within 24 hours. If your issue ` +
-  `is urgent, please ask at the front desk and reference this case.`;
-
-export type DraftInput = {
-  caseRow: CaseRow;
-  actorUserId: string;
-};
-
+export type DraftInput = { caseRow: CaseRow; actorUserId: string };
 export function useAiDraft() {
+  const { language } = useT();
   return useMutation({
-    mutationFn: async (_input: DraftInput): Promise<{ draft: string }> => {
-      // FR-22: only non-PII fields are sent to the (future) LLM. Today,
-      // we just compose the stub from the same allowlist. The serializer
-      // is exercised so any future change to the allowlist is caught
-      // here.
-      const safe = toLlmSafeSummary(_input.caseRow);
-      const draft = STUB_TEMPLATE(safe.Category || "your", safe.Severity || "Medium");
-      // Simulate small latency so UX-4 ("AI Draft" affordance) feels real.
-      await new Promise((r) => setTimeout(r, 350));
-      return { draft };
+    mutationFn: async ({ caseRow }: DraftInput): Promise<{ draft: string; source: "template" | "ai" }> => {
+      // The API receives enums only. Never send the summary, patient reference,
+      // user identity, or case identifier to an external model.
+      const category = DRAFT_CATEGORIES.find(value => value === caseRow.Category) ?? "other";
+      const severity = ["Low", "Medium", "High"].includes(caseRow.Severity ?? "") ? caseRow.Severity : "Medium";
+      try {
+        const response = await fetch("/api/assistant/draft", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(18_000), body: JSON.stringify({ category, severity, language })
+        });
+        if (!response.ok) throw new Error("Draft service unavailable");
+        const result = await response.json();
+        if (typeof result.draft === "string" && result.draft.trim() && ["template", "ai"].includes(result.source)) return result;
+      } catch { /* A reviewed template remains available without a provider. */ }
+      return { draft: draftTemplate(language), source: "template" };
     }
   });
 }

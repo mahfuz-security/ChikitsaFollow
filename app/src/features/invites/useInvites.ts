@@ -1,3 +1,4 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { blocksClient } from "../../lib/blocks/client";
 
@@ -50,7 +51,7 @@ export function useInvitesForOrg(orgId: string | undefined) {
       // org we manage so a manager can't accidentally see invites from
       // other branches they're not in. The SDK returns a BlocksPagedResult
       // whose `data` wraps the array under `items`.
-      const response = (await blocksClient.data.collection("Invite").list({
+      const response = (await gatewayCollection("Invite").list({
         filter: { OrgId: orgId },
         pageNo: 1,
         pageSize: 100
@@ -79,7 +80,7 @@ export function useCreateInvite() {
         ExpiresAt: expiresAt
       };
       if (input.note) row.Note = input.note;
-      const result = await blocksClient.data.collection("Invite").create(row);
+      const result = await gatewayCollection("Invite").create(row);
       return result as InviteRow;
     },
     onSuccess: (_data, variables) => {
@@ -97,7 +98,7 @@ export function useCancelInvite() {
     // resolution treats the latest as truth.
     mutationFn: async (args: { inviteId: string; orgId: string }) => {
       const now = new Date().toISOString();
-      const result = await blocksClient.data.collection("Invite").create({
+      const result = await gatewayCollection("Invite").create({
         InviteId: args.inviteId,
         Status: "cancelled" as InviteStatus,
         CancelledAt: now

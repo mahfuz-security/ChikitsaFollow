@@ -83,7 +83,7 @@ export function mockBlocksClient(state: MockState) {
   // collection they need; only the operations below are stubbed.
   const matchesFilter = (row: Record<string, unknown>, filter?: Record<string, unknown>) => {
     if (!filter) return true;
-    return Object.entries(filter).every(([k, v]) => row[k] === v);
+    return Object.entries(filter).every(([k, v]) => row[k === "ItemId" ? "itemId" : k] === v);
   };
 
   const collection = (schemaName: keyof MockState) => {

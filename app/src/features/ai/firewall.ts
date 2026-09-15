@@ -1,10 +1,5 @@
-// FR-19: server-side firewall scan blocks clinical content. The cloud
-// platform doesn't ship a built-in equivalent in this tenant, so this
-// module is the client mirror of the same check — every write path that
-// could carry a patient's medical context runs through scanForClinical()
-// before submit. The regex set is deliberately conservative: false
-// positives are acceptable (the front-desk rewords); false negatives are
-// not (DC-1, FR-19, FR-22).
+// Best-effort input screening, not a complete DLP system. The same policy
+// must be enforced at the gateway before production clinical-data claims.
 
 export type FirewallResult =
   | { ok: true }
@@ -13,6 +8,9 @@ export type FirewallResult =
 // Each entry: a category label shown to the user, and a regex that
 // matches clinical content. Keep patterns case-insensitive where useful.
 const CLINICAL_PATTERNS: { label: string; regex: RegExp }[] = [
+  { label: "clinical condition", regex: /\b(?:has|have|with|suffers from|positive for)\s+(?:diabetes|cancer|hypertension|hepatitis|hiv|tuberculosis)\b/i },
+  { label: "Bangla clinical information", regex: /রোগনির্ণয়|রোগ নির্ণয়|ডায়াবেটিস|ক্যান্সার|উচ্চ রক্তচাপ|ইনসুলিন|মেটফরমিন|প্রেসক্রিপশন/u },
+  { label: "result value", regex: /(?:hba1c|glucose|creatinine|হিমোগ্লোবিন|শর্করা|ক্রিয়েটিনিন)\s*(?:result|level|is|was|ফল|মাত্রা|হলো|হল|[:=])*\s*[\d০-৯]/iu },
   { label: "diagnosis keyword", regex: /\b(diagnos(?:ed|is)|prognosis|pathology)\b/i },
   { label: "lab value", regex: /\b(?:creatinine|hemoglobin|haemoglobin|hba1c|potassium|sodium|glucose|tsh|crp|esr|wbc|rbc|platelet(?:s)?)\b\s*[:=]?\s*\d/i },
   { label: "lab unit suffix", regex: /\b\d+(?:\.\d+)?\s*(?:mg\/dl|mmol\/l|mmHg|mEq\/L|µg\/mL|ug\/mL|ng\/mL|U\/L|IU\/L)\b/i },
@@ -22,7 +20,7 @@ const CLINICAL_PATTERNS: { label: string; regex: RegExp }[] = [
   { label: "SNOMED CT code", regex: /\b\d{6,18}\b/ }, // very loose; intentionally to catch any 6+ digit medical code
   { label: "LOINC code", regex: /\bLOINC[:\s-]*\d+/i },
   { label: "vital sign", regex: /\b(?:BP|blood pressure|heart rate|pulse|temperature|spo2|saturation)\b\s*[:=]?\s*\d/i },
-  { label: "imaging / test", regex: /\b(?:MRI|CT scan|X-ray|xray|ultrasound|ECG|EKG|endoscopy|biopsy)\b/i }
+  { label: "clinical imaging order", regex: /\b(?:MRI|CT scan|X-ray|xray|ultrasound|ECG|EKG|endoscopy|biopsy)\b.{0,30}\b(?:ordered|shows|showed|revealed|abnormal|lesion)\b/i }
 ];
 
 export function scanForClinical(text: string | undefined | null): FirewallResult {

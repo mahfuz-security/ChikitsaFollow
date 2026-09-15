@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      proxy: { "/api/assistant": { target: "http://127.0.0.1:8787", changeOrigin: false }, "/api/private": { target: "http://127.0.0.1:8787", changeOrigin: false } },
       // Vite blocks unrecognized Host headers by default (DNS-rebinding
       // protection) -- without this, a custom domain 404s with "Blocked
       // request. This host is not allowed" even once hosts + cert are set.

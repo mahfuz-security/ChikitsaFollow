@@ -9,6 +9,7 @@ import { Skeleton } from "../../shared/ui/Skeleton";
 import { StatusPill } from "../../shared/ui/StatusPill";
 import { useCurrentUser } from "../profile/useCurrentUser";
 import { useDismissTrend, useMarkTrendActioned, useTrendFlags } from "./useTrends";
+import { QualityPatterns } from "./QualityPatterns";
 
 function statusTone(status: string | undefined): "good" | "warn" | "neutral" {
   if (status === "actioned") return "good";
@@ -49,8 +50,9 @@ export function TrendsPage() {
   return (
     <section>
       <PageHeader title={t("trends.title")} subtitle={t("trends.subtitle")} />
+      <QualityPatterns />
       {error ? <Alert tone="error">{error}</Alert> : null}
-      {flags.isLoading ? (
+      {flags.isError ? <Alert tone="error">{t("common.error")}</Alert> : flags.isLoading ? (
         <Skeleton className="skeleton-line" />
       ) : !flags.data || flags.data.length === 0 ? (
         <EmptyState icon={<TrendingUp size={28} />} title={t("trends.empty")} description={t("trends.emptyHint")} />
@@ -69,7 +71,7 @@ export function TrendsPage() {
             <tbody>
               {flags.data.map((row) => (
                 <tr key={row.itemId}>
-                  <td className="mono">{row.BranchId ?? "—"}</td>
+                  <td className="mono">{row.BranchId ?? "—"}{row.DraftedFix ? <p>{row.DraftedFix}</p> : null}</td>
                   <td className="mono">{row.WindowStart ?? "—"} → {row.WindowEnd ?? "—"}</td>
                   <td>{row.CaseCount ?? "0"}</td>
                   <td><StatusPill tone={statusTone(row.Status)}>{row.Status ?? "—"}</StatusPill></td>

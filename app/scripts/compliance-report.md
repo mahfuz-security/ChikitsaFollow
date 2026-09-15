@@ -1,6 +1,6 @@
 # Compliance report
 
-Generated: 2026-09-14T11:35:21.533Z
+Generated: 2026-09-14T17:57:09.859Z
 
 | Check | Status | Detail |
 | --- | --- | --- |

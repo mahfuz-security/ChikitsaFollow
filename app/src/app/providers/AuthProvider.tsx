@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { fetchSessionClaims, logout as endSession, onSessionExpired, startLogin } from "../../lib/blocks/auth";
 
@@ -20,6 +21,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const STATUS_POLL_MS = 5 * 60_000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queries = useQueryClient();
+  const previousSubject = useRef<unknown>();
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [claims, setClaims] = useState<Record<string, unknown> | undefined>();
 
@@ -30,9 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // what "signed in" means, not the presence of a cached access token.
   const refresh = useCallback(async () => {
     const sessionClaims = await fetchSessionClaims();
+    if (previousSubject.current && previousSubject.current !== sessionClaims?.sub) {
+      await queries.cancelQueries({ predicate: query => query.queryKey[0] !== "i18n" });
+      queries.removeQueries({ predicate: query => query.queryKey[0] !== "i18n" });
+    }
+    previousSubject.current = sessionClaims?.sub;
     setClaims(sessionClaims);
     setStatus(sessionClaims ? "authenticated" : "unauthenticated");
-  }, []);
+  }, [queries]);
 
   useEffect(() => {
     void refresh();

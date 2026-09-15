@@ -1,3 +1,4 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { blocksClient } from "../../lib/blocks/client";
 
@@ -14,7 +15,7 @@ type PagedResponse = { data?: { items?: unknown[] } } | undefined;
 export function useActiveRootCauses() {
   return useQuery({
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("RootCause").list({
+      const response = (await gatewayCollection("RootCause").list({
         pageNo: 1,
         pageSize: 100
       })) as PagedResponse;
@@ -28,7 +29,7 @@ export function useActiveRootCauses() {
 export function useAllRootCauses() {
   return useQuery({
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("RootCause").list({
+      const response = (await gatewayCollection("RootCause").list({
         pageNo: 1,
         pageSize: 200
       })) as PagedResponse;
@@ -54,7 +55,7 @@ export function useCreateRootCause() {
         IsActive: true
       };
       if (input.description) row.Description = input.description;
-      const created = await blocksClient.data.collection("RootCause").create(row);
+      const created = await gatewayCollection("RootCause").create(row);
       return created as RootCauseRow;
     },
     onSuccess: () => {
@@ -67,7 +68,7 @@ export function useSetRootCauseActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { itemId: string; isActive: boolean }) => {
-      const updated = await blocksClient.data.collection("RootCause").update(input.itemId, { IsActive: input.isActive });
+      const updated = await gatewayCollection("RootCause").update(input.itemId, { IsActive: input.isActive });
       return updated as RootCauseRow;
     },
     onSuccess: () => {

@@ -1,5 +1,7 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { blocksClient } from "../../lib/blocks/client";
+import { hasPermission } from "../../lib/permissions";
 
 export type TrendFlagRow = {
   itemId?: string;
@@ -18,7 +20,9 @@ type PagedResponse = { data?: { items?: unknown[] } } | undefined;
 export function useTrendFlags() {
   return useQuery({
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("TrendFlag").list({
+      const profile = (await blocksClient.iam.me()).data;
+      if (!hasPermission(profile, "trend-read")) throw new Error("Trend access is not permitted.");
+      const response = (await gatewayCollection("TrendFlag").list({
         pageNo: 1,
         pageSize: 100
       })) as PagedResponse;
@@ -32,12 +36,14 @@ export function useMarkTrendActioned() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { itemId: string; qualityLeadUserId: string; draftedFix?: string }) => {
+      const profile = (await blocksClient.iam.me()).data;
+      if (!profile?.itemId || !hasPermission(profile, "trend-action")) throw new Error("Corrective actions are not permitted.");
       const patch: Record<string, unknown> = {
         Status: "actioned",
-        QualityLeadUserId: input.qualityLeadUserId
+        QualityLeadUserId: profile.itemId
       };
       if (input.draftedFix) patch.DraftedFix = input.draftedFix;
-      const updated = await blocksClient.data.collection("TrendFlag").update(input.itemId, patch);
+      const updated = await gatewayCollection("TrendFlag").update(input.itemId, patch);
       return updated as TrendFlagRow;
     },
     onSuccess: () => {
@@ -50,9 +56,11 @@ export function useDismissTrend() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { itemId: string; qualityLeadUserId: string }) => {
-      const updated = await blocksClient.data.collection("TrendFlag").update(input.itemId, {
+      const profile = (await blocksClient.iam.me()).data;
+      if (!profile?.itemId || !hasPermission(profile, "trend-action")) throw new Error("Corrective actions are not permitted.");
+      const updated = await gatewayCollection("TrendFlag").update(input.itemId, {
         Status: "dismissed",
-        QualityLeadUserId: input.qualityLeadUserId
+        QualityLeadUserId: profile.itemId
       });
       return updated as TrendFlagRow;
     },

@@ -1,3 +1,4 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { useQuery } from "@tanstack/react-query";
 import { blocksClient } from "../../lib/blocks/client";
 
@@ -16,7 +17,7 @@ type PagedResponse = { data?: { items?: unknown[] } } | undefined;
 export function useAuditLog() {
   return useQuery({
     queryFn: async () => {
-      const response = (await blocksClient.data.collection("AuditLog").list({
+      const response = (await gatewayCollection("AuditLog").list({
         pageNo: 1,
         pageSize: 200
       })) as PagedResponse;

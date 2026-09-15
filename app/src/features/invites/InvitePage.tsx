@@ -1,3 +1,4 @@
+import { gatewayCollection } from "../../lib/blocks/gateway";
 import { Mail, Send, ShieldCheck, UserPlus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { blocksClient } from "../../lib/blocks/client";
@@ -116,7 +117,7 @@ export function InvitePage() {
       // Re-create a fresh invite with the same email + role, same TTL.
       // (Phase E will swap this for IAM's `users.invite` once email
       // delivery is wired in. For now we just add a new row.)
-      await blocksClient.data.collection("Invite").create({
+      await gatewayCollection("Invite").create({
         InviteId: invite.InviteId, // carry id so the row reads as the same invite
         Email: invite.Email,
         RoleSlug: invite.RoleSlug,

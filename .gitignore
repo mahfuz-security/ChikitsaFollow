@@ -1,0 +1,40 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+playwright-report/
+test-results/
+
+# Environment files: commit only reviewed, credential-free examples
+.env
+.env.*
+!.env.example
+env.*
+
+# Certificates, credentials, private records, and local backups
+.cert/
+.private/
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.db
+*.db-*
+*.bak
+*.dump
+credentials.json
+service-account*.json
+secrets.json
+secrets.*
+
+# Local workspace notes and tooling state
+/Codex.md
+.DS_Store
+.idea/
+.vscode/
+*.swp

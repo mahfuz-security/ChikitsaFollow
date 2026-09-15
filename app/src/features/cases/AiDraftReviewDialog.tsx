@@ -37,6 +37,9 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
 
   const [phase, setPhase] = useState<DialogPhase>("review");
   const [draftText, setDraftText] = useState<string | undefined>();
+  const [draftSource, setDraftSource] = useState<"template" | "ai">("template");
+  const [originalDraft, setOriginalDraft] = useState("");
+  const [replyRequestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState<string | undefined>();
   const [chosenRootCause, setChosenRootCause] = useState<string | undefined>();
   const [closeNote, setCloseNote] = useState("");
@@ -53,11 +56,13 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
   async function handleGenerate() {
     setError(undefined);
     try {
-      const { draft: text } = await draft.mutateAsync({
+      const { draft: text, source } = await draft.mutateAsync({
         caseRow,
         actorUserId: me.data?.data?.itemId ?? "unknown"
       });
       setDraftText(text);
+      setOriginalDraft(text);
+      setDraftSource(source);
       // Append an ai_draft event so the history reflects what was
       // generated (FR-7, FR-17).
       await appendEvent.mutateAsync({
@@ -65,8 +70,8 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
         eventType: "ai_draft",
         actorUserId: me.data?.data?.itemId ?? "unknown",
         text,
-        aiGenerated: true,
-        metadata: { source: "stub" }
+        aiGenerated: source !== "template",
+        metadata: { source }
       });
     } catch (caught) {
       const err = caught as { message?: string };
@@ -94,9 +99,11 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
       await appendEvent.mutateAsync({
         caseId: caseRow.itemId ?? "",
         eventType: "sent_reply",
+        requestId: replyRequestId,
         actorUserId: me.data?.data?.itemId ?? "unknown",
         text,
-        aiGenerated: false
+        aiGenerated: false,
+        metadata: { draftSource, originalDraft, edited: text !== originalDraft }
       });
       onClose();
     } catch (caught) {
@@ -116,13 +123,18 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
       setError(t("cases.detail.rootCauseRequired"));
       return;
     }
+    const fw = scanForClinical([text, closeNote].join(" "));
+    if (!fw.ok) { setError(fw.message); return; }
+    if (!canSendReply || !canClose) { setError(t("common.error")); return; }
     try {
       await appendEvent.mutateAsync({
         caseId: caseRow.itemId ?? "",
         eventType: "sent_reply",
+        requestId: replyRequestId,
         actorUserId: me.data?.data?.itemId ?? "unknown",
         text,
-        aiGenerated: false
+        aiGenerated: false,
+        metadata: { draftSource, originalDraft, edited: text !== originalDraft }
       });
       await closeCase.mutateAsync({
         caseId: caseRow.itemId ?? "",
@@ -140,7 +152,7 @@ export function AiDraftReviewDialog({ caseRow, onClose }: AiDraftReviewDialogPro
   return (
     <Modal onClose={onClose} title={t("cases.detail.aiDraftReviewTitle")}>
       <div className="ai-draft-meta">
-        <StatusPill tone="info"><Sparkles size={14} />{t("cases.detail.aiDraftLabel")}</StatusPill>
+        <StatusPill tone="info"><Sparkles size={14} />{t(draftSource === "ai" ? "cases.detail.aiDraftLabel" : "cases.detail.templateLabel")}</StatusPill>
         <span className="muted">{t("cases.detail.aiDraftMeta")}</span>
       </div>
 

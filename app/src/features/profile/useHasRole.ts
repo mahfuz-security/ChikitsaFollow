@@ -1,4 +1,5 @@
-import type { BlocksUser } from "@seliseblocks/client";
+import { rolesForUser } from "../../lib/roles";
+export { rolesForUser } from "../../lib/roles";
 import { useCurrentUser } from "./useCurrentUser";
 
 // Single-source-of-truth helpers for role gating. The Profile page exposes
@@ -16,15 +17,4 @@ export function useHasRole(...slugs: RoleSlug[]): boolean | undefined {
 
 export function useHasAnyRole(...slugs: RoleSlug[]): boolean | undefined {
   return useHasRole(...slugs);
-}
-
-export function rolesForUser(profile: BlocksUser | undefined | null): string[] {
-  if (!profile) return [];
-  const raw = profile.roles;
-  if (Array.isArray(raw)) return raw.map(String);
-  // Defensive: if IAM ever switches to a per-org Record, take all values.
-  if (raw && typeof raw === "object") {
-    return Object.values(raw as Record<string, unknown>).flatMap((value) => Array.isArray(value) ? value.map(String) : [String(value)]);
-  }
-  return [];
 }

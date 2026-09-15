@@ -3,10 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-const { state, client } = vi.hoisted(() => {
-  const path = "../../test/mocks.ts";
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require(path) as typeof import("../../test/mocks");
+const { state, client } = await vi.hoisted(async () => {
+  const mod = await import("../../test/mocks");
   const state = mod.emptyState();
   const built = mod.mockBlocksClient(state);
   return { state: built.state, client: built };
@@ -40,6 +38,8 @@ function Wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   state.Approval.length = 0;
+  state.Case.length = 0;
+  state.Case.push({ itemId: "c-1", BranchId: "branch-1", Category: "billing", Severity: "Medium", PatientRefCode: "CF-ABC23456", Subject: "Wrong bill", Status: "open" });
 });
 
 afterEach(() => {

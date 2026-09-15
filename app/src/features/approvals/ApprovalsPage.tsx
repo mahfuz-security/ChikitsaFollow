@@ -9,6 +9,8 @@ import { StatusPill } from "../../shared/ui/StatusPill";
 import { useCurrentUser } from "../profile/useCurrentUser";
 import { rolesForUser } from "../profile/useHasRole";
 import { useApprovalsForViewer, useDecideApproval, useRequestApproval } from "./useApprovals";
+import { RefundPayment } from "../refunds/RefundPayment";
+import { hasPermission } from "../../lib/permissions";
 
 function decisionTone(decision: string | undefined): "good" | "warn" | "neutral" {
   if (decision === "approved") return "good";
@@ -24,7 +26,7 @@ export function ApprovalsPage() {
   const request = useRequestApproval();
 
   const callerRoles = rolesForUser(me.data?.data);
-  const canRequest = callerRoles.includes("front_desk") || callerRoles.includes("branch_manager");
+  const canRequest = hasPermission(me.data?.data, "approval-request");
   const canDecide = callerRoles.includes("branch_manager") || callerRoles.includes("admin") || callerRoles.includes("clouduser");
 
   const [amount, setAmount] = useState("");
@@ -75,6 +77,7 @@ export function ApprovalsPage() {
   return (
     <section>
       <PageHeader title={t("approvals.title")} subtitle={t("approvals.subtitle")} />
+      {error && !canRequest ? <Alert tone="error">{error}</Alert> : null}
 
       {canRequest ? (
         <form className="panel" onSubmit={handleRequest}>
@@ -113,7 +116,7 @@ export function ApprovalsPage() {
 
       <div className="panel">
         <div className="panel-title">{t("approvals.listTitle")}</div>
-        {approvals.isLoading ? (
+        {approvals.isError ? <Alert tone="error">{t("common.error")}</Alert> : approvals.isLoading ? (
           <Skeleton className="skeleton-line" />
         ) : !approvals.data || approvals.data.length === 0 ? (
           <EmptyState title={t("approvals.empty")} description={t("approvals.emptyHint")} />
@@ -136,6 +139,7 @@ export function ApprovalsPage() {
                   <td>{row.AmountType ? t(tx(`approvals.type.${row.AmountType}`)) : "—"}</td>
                   <td><StatusPill tone={decisionTone(row.Decision)}>{row.Decision ?? "—"}</StatusPill></td>
                   <td>
+                    {canDecide && row.Decision === "approved" && row.AmountType === "refund" && row.CaseId && row.itemId ? <RefundPayment caseId={row.CaseId} approvalId={row.itemId} /> : null}
                     {canDecide && row.Decision === "pending" ? (
                       <div className="row-actions">
                         <ActionButton onClick={() => handleDecide(row.itemId ?? "", "approved")} disabled={decide.isPending}>

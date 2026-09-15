@@ -1,6 +1,19 @@
-# app
+# ChikitsaFollow
 
-Blocks starter app: React 18 + Vite + TypeScript, with a real hosted Blocks IAM login and a project-scoped profile page as the landing page.
+Service-recovery application built with React, Vite, TypeScript, and Blocks IAM/Data/Localization. Patients land on their service desk; staff see role-gated case workflows.
+
+See [SRS implementation status](../SRS-IMPLEMENTATION.md) for implemented flows and production blockers. The interface and client-side safeguards do not certify cloud authorization or healthcare compliance.
+
+## Assistant And Languages
+
+Run `npm run start:api` alongside Vite for reviewed service guidance and optional
+server-side Groq drafts. Without provider configuration, reviewed templates remain
+available. See [server setup](server/README.md); never put a provider key in a
+`VITE_` variable. The backend must be deployed separately from the static frontend.
+
+The common module has 358 English and 358 Bangla keys published in Blocks dev.
+`npm run export:localization` regenerates local dictionaries; publishing changes
+requires a Blocks CLI dry-run and approval. German coverage is partial.
 
 Every Blocks API call in this app goes through [`@seliseblocks/client`](https://www.npmjs.com/package/@seliseblocks/client) via a single `createBlocksClient()` instance in `src/lib/blocks/client.ts` — there is no hand-written `fetch()` wrapper for Blocks endpoints anywhere in this app. Each SDK module is exercised in context rather than in one dedicated demo panel: `auth` in the hosted login flow, `iam` on the Profile page and user menu, and `localization` in `LocalizationProvider`. Add more pages under `src/features/` as your app needs them.
 
@@ -11,7 +24,23 @@ npm install
 npm run dev
 ```
 
-`.env` already has working defaults for this project — you only need to fill in `VITE_BLOCKS_OIDC_CLIENT_ID` (see below) before login will work.
+Create `.env` from `.env.example` and verify every public setting against your
+Blocks project, including `VITE_BLOCKS_OIDC_CLIENT_ID`. Local environment files
+are not distributed with this repository. See the [project guide](../README.md)
+for the private API and release prerequisites.
+
+## Public signup clinics
+
+The signup clinic picker uses `src/features/organizations/signupClinicCatalog.ts`,
+a project-scoped directory of public clinic names and IDs. The IAM organization
+list requires authentication, so anonymous signup must not call that admin endpoint.
+IAM still validates signup and organization membership on the server.
+
+After adding, renaming, or disabling an organization in Blocks OS, run
+`npm run sync:signup-clinics` with Blocks CLI 0.5.0 authenticated to this project.
+This command reads all organization pages and exports only active names and IDs;
+it does not change cloud records. Rebuild and deploy to update a deployed signup
+page. Each environment needs its own catalog; a mismatched tenant shows no clinics.
 
 ## Login setup (required)
 

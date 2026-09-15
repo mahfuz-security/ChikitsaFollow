@@ -8,7 +8,7 @@ export function NotFoundPage({ onNavigate }: { onNavigate: (path: string) => voi
       <h2>{t("notFound.title")}</h2>
       <p>{t("notFound.message")}</p>
       <button
-        className="primary-button"
+        className="btn-base btn-primary"
         onClick={(event) => {
           event.preventDefault();
           onNavigate("/");

@@ -1,9 +1,10 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { blocksClient } from "../blocks/client";
 import { defaultDictionary } from "./dictionary";
 import type { TranslationKey } from "./dictionary";
+import { bengaliDictionary, germanDictionary } from "./locales";
 
 type Dictionary = Record<string, string>;
 export type LocalizationLanguage = { code: string; isDefault: boolean; name: string };
@@ -16,9 +17,13 @@ type LocalizationValue = {
 
 const LocalizationContext = createContext<LocalizationValue | undefined>(undefined);
 const LANGUAGE_KEY = "blocks-app:language";
-// One module per screen would keep the initial payload small, but this
-// starter only ships Profile -- add module names here as you add pages.
-const MODULES = ["common", "auth", "cases", "approvals", "trends", "audit", "vocab"];
+// This project's published common bundle contains all application keys.
+const MODULES = ["common"];
+const FALLBACK_LANGUAGES = [
+  { code: "en-US", name: "English", isDefault: true },
+  { code: "bn-BD", name: "বাংলা", isDefault: false },
+  { code: "de-DE", name: "Deutsch", isDefault: false }
+];
 
 function normalizeLanguage(raw: Record<string, unknown>): LocalizationLanguage {
   const code = raw.languageCode ?? raw.code ?? raw.culture ?? "en";
@@ -27,7 +32,9 @@ function normalizeLanguage(raw: Record<string, unknown>): LocalizationLanguage {
 }
 
 export function LocalizationProvider({ children }: { children: ReactNode }) {
-  const [languageOverride, setLanguageOverride] = useState(() => localStorage.getItem(LANGUAGE_KEY) ?? "");
+  const [languageOverride, setLanguageOverride] = useState(() => {
+    try { const saved = localStorage.getItem(LANGUAGE_KEY); return saved === "en" ? "en-US" : saved ?? ""; } catch { return ""; }
+  });
 
   const languagesQuery = useQuery({
     queryFn: () => blocksClient.localization.languages(),
@@ -35,15 +42,20 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
     staleTime: 5 * 60_000
   });
 
-  const languages = useMemo(() => (languagesQuery.data ?? []).map(normalizeLanguage), [languagesQuery.data]);
+  const languages = useMemo(() => {
+    const remote = (Array.isArray(languagesQuery.data) ? languagesQuery.data : []).map(normalizeLanguage);
+    return FALLBACK_LANGUAGES.map(entry => ({ ...entry, isDefault: remote.find(item => item.code === entry.code)?.isDefault ?? entry.isDefault }));
+  }, [languagesQuery.data]);
   // Until /Language/Gets resolves (or on a tenant with none configured), fall
   // back to "en" -- it must still match a real languageCode for translations
   // to resolve, so this is a startup default rather than a guaranteed hit.
   const defaultLanguage = languages.find((entry) => entry.isDefault)?.code ?? languages[0]?.code ?? "en";
-  const language = languageOverride || defaultLanguage;
+  const language = languages.some(entry => entry.code === languageOverride) ? languageOverride : defaultLanguage;
+  useEffect(() => { document.documentElement.lang = language; document.documentElement.dir = "ltr"; }, [language]);
 
   function setLanguage(next: string) {
-    localStorage.setItem(LANGUAGE_KEY, next);
+    if (!languages.some(entry => entry.code === next)) return;
+    try { localStorage.setItem(LANGUAGE_KEY, next); } catch { /* Storage may be unavailable in private browsing. */ }
     setLanguageOverride(next);
   }
 
@@ -64,7 +76,7 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
       const moduleName = MODULES[index];
       for (const [key, value] of Object.entries(query.data ?? {})) {
         const appKey = moduleName === "common" && key in defaultDictionary ? key : `${moduleName}.${key}`;
-        merged[appKey] = value;
+        if (typeof value === "string" && value.trim() && !value.includes("KEY MISSING")) merged[appKey] = value;
       }
     });
     return merged;
@@ -76,11 +88,20 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
     languages,
     setLanguage,
     t: (key, fallback, params) => {
-      const raw = cloudDictionary[key] ?? defaultDictionary[key] ?? fallback ?? key;
+      const local = language.startsWith("bn") ? bengaliDictionary : language.startsWith("de") ? germanDictionary : defaultDictionary;
+      // Keep the approved brand consistent while older cloud bundles are cached.
+      const name = local["app.name"] ?? defaultDictionary["app.name"];
+      const raw = key === "app.name" ? name : (cloudDictionary[key] ?? local[key] ?? defaultDictionary[key] ?? fallback ?? key).replaceAll("ChikitsaFollow", name);
       if (!params) return raw;
       return raw.replace(/\{(\w+)\}/g, (_, name) => (params[name] ?? `{${name}}`));
     }
   }), [cloudDictionary, language, languages]);
+
+  useEffect(() => {
+    const name = value.t("app.name");
+    document.title = name;
+    document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute("content", name);
+  }, [value]);
 
   return <LocalizationContext.Provider value={value}>{children}</LocalizationContext.Provider>;
 }

@@ -7,7 +7,11 @@ export function useCurrentUser() {
   const { status } = useAuth();
   return useQuery({
     enabled: status === "authenticated",
-    queryFn: () => blocksClient.iam.me(),
+    queryFn: async () => {
+      const response = await blocksClient.iam.me();
+      if (response.isSuccess === false || (Array.isArray(response.errors) && response.errors.length) || !response.data?.itemId) throw new Error("Unable to load your account.");
+      return response;
+    },
     queryKey: ["iam", "me"]
   });
 }

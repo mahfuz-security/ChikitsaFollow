@@ -10,6 +10,8 @@ import { useT } from "../../lib/i18n/LocalizationProvider";
 import type { TranslationKey } from "../../lib/i18n/dictionary";
 import { useCurrentUser } from "../../features/profile/useCurrentUser";
 import { rolesForUser } from "../../features/profile/useHasRole";
+import { BrandMark } from "../../shared/ui/BrandMark";
+import { HospitalSwitcher, PatientHospitalScope } from "./HospitalSwitcher";
 
 const COLLAPSED_KEY = "blocks-app:sidebar-collapsed";
 const MOBILE_QUERY = "(max-width: 880px)";
@@ -32,12 +34,14 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
   const [collapsedPref, setCollapsedPref] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "true");
   const { t } = useT();
   const me = useCurrentUser();
+  const patient = rolesForUser(me.data?.data).includes("patient") && !rolesForUser(me.data?.data).some(role => ["front_desk", "branch_manager", "quality_lead", "admin", "clouduser"].includes(role));
   // On narrow screens the sidebar is always the icon-only rail -- no
   // separate hamburger/drawer/scrim needed, and no dead-end state where
   // nothing on screen can bring navigation back.
   const collapsed = collapsedPref || isMobile;
   const items = visibleNavItems(rolesForUser(me.data?.data));
-  const activeItem = items.find((item) => item.href === activePath);
+  const sectionPath = activePath === "/" ? (items.some(item => item.href === "/cases") ? "/cases" : "/") : activePath.startsWith("/cases/") ? "/cases" : activePath;
+  const activeItem = items.find((item) => item.href === sectionPath);
 
   useEffect(() => {
     localStorage.setItem(COLLAPSED_KEY, String(collapsedPref));
@@ -48,9 +52,9 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
       <aside className={collapsed ? "collapsed" : ""}>
         <div className="sidebar-header">
           {collapsed ? null : (
-            <a className="brand" href="/" onClick={(event) => { event.preventDefault(); onNavigate("/"); }}>
-              <span className="brand-mark"><Activity size={16} /></span>
-              <span>ChikitsaFollow</span>
+            <a className="brand" href="/" onClick={(event) => { event.preventDefault(); onNavigate("/"); }} aria-label={t("app.name")}>
+              <BrandMark />
+              <span>{t("app.name")}</span>
             </a>
           )}
           {/* Hidden on mobile by CSS (nothing to toggle -- the rail is always
@@ -65,7 +69,7 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
             <PanelLeft size={16} />
           </button>
         </div>
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" aria-label="Main navigation">
           {items.map((item) => {
             const label = item.labelKey as TranslationKey;
             return (
@@ -73,14 +77,17 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
                 key={item.href}
                 href={item.href}
                 data-tooltip={t(label)}
-                className={activePath === item.href ? "active" : ""}
+                title={t(label)}
+                aria-label={t(label)}
+                aria-current={sectionPath === item.href ? "page" : undefined}
+                className={sectionPath === item.href ? "active" : ""}
                 onClick={(event) => {
                   event.preventDefault();
                   onNavigate(item.href);
                 }}
               >
                 <item.icon size={18} />
-                {collapsed ? null : <span>{t(label)}</span>}
+                <span className={collapsed ? "nav-label-collapsed" : ""}>{t(label)}</span>
               </a>
             );
           })}
@@ -88,6 +95,7 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
       </aside>
       <div className="content">
         <header className="topbar">
+          <a className="mobile-brand" href="/" aria-label={t("app.name")} onClick={event => { event.preventDefault(); onNavigate("/"); }}><BrandMark /><span>{t("app.name")}</span></a>
           {activeItem ? (
             <div className="breadcrumb">
               <activeItem.icon size={16} />
@@ -95,12 +103,13 @@ export function AppShell({ activePath, children, onNavigate }: { activePath: str
             </div>
           ) : null}
           <div className="topbar-spacer" />
+          {patient ? <HospitalSwitcher /> : null}
           <ThemeToggle />
           <LanguageSwitcher />
           <NotificationsMenu />
           <UserMenu onNavigate={onNavigate} />
         </header>
-        <main>{children}</main>
+        <main>{patient ? <PatientHospitalScope>{children}</PatientHospitalScope> : children}</main>
       </div>
     </div>
   );
