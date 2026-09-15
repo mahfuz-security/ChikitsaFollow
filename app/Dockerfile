@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -32,13 +32,22 @@ ENV VITE_BLOCKS_HOSTED_LOGIN=${VITE_BLOCKS_HOSTED_LOGIN}
 RUN NODE_OPTIONS="--max-old-space-size=4096" npx vite build --mode "${ci_build}" \
   && node scripts/write-release-env.mjs "${ci_build}"
 
-FROM nginxinc/nginx-unprivileged:1.29-alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+FROM node:24-alpine
+WORKDIR /app
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server/*.ts ./server/
+COPY --from=builder /app/src/features/ai/*.ts ./src/features/ai/
+COPY --from=builder /app/src/features/refunds/payoutTypes.ts ./src/features/refunds/
+COPY --from=builder /app/src/features/organizations/signupClinicCatalog.ts ./src/features/organizations/
+COPY --from=builder /app/src/lib/permissions.ts /app/src/lib/roles.ts ./src/lib/
+RUN mkdir -p /data && chown node:node /data
+ENV NODE_ENV=production
+ENV API_HOST=0.0.0.0
+ENV API_PORT=8080
+ENV SERVE_FRONTEND=true
+ENV PRIVATE_DATA_DIR=/data
+USER node
 EXPOSE 8080
-
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#   CMD wget -qO- http://localhost:8080/ || exit 1
+CMD ["npm", "run", "start:api"]

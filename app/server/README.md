@@ -49,11 +49,25 @@ Do not trust arbitrary proxy headers or enable Express trust proxy globally.
 
 ## Production Routing
 
-The existing frontend nginx image does not contain a Node server. Deploy the
-API separately (the optional Dockerfile here uses `app/` as its build context),
-and configure the ingress to send `/api/assistant` to it under the same HTTPS
-origin as the frontend. Do not expose port 8787 publicly. Set `APP_ORIGINS` to
-the deployed browser origin. Do not route API paths to the SPA fallback.
+The application `app/Dockerfile` builds a combined frontend/API image. Configure
+Blocks Release to build from `app/` and route its HTTPS ingress to container port
+8080. `SERVE_FRONTEND=true` enables static assets and SPA routes after API routes.
+Unknown API paths return JSON 404 responses; `/healthz` reports process liveness,
+not cloud readiness. The optional `server/Dockerfile` remains API-only.
+
+Set `APP_ORIGINS=https://dtdgmi-elgoe.slsblx.com` at runtime. Keep
+`API_HOST=0.0.0.0`, `API_PORT=8080`, `NODE_ENV=production`, and
+`PRIVATE_DATA_DIR=/data` for the combined image. Configure a Blocks-managed durable
+volume at `/data`, writable by UID 1000, with one application replica and no
+overlapping writers during replacement. The Dockerfile does not provision that
+volume. A container filesystem alone is not persistent storage.
+
+Inject `PAYOUT_ENCRYPTION_KEY`, service credentials, the hospital branch mapping,
+and optional Groq credentials as runtime environment values, never Docker build
+arguments or frontend variables. Startup fails without the production encryption
+key. Confirm the hosting platform supports durable volumes and runtime secret
+injection before triggering deployment; these are not configured by the current
+Release CLI hosting-settings surface.
 
 No cloud deployment was performed by these changes.
 

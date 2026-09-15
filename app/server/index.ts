@@ -7,6 +7,7 @@ import { PrivateStore } from "./privateStore";
 import { privateConfig } from "./privateConfig";
 import { serviceClient } from "./blocksRuntime";
 import { startNotificationWorker } from "./notificationWorker";
+import { mountFrontend } from "./frontend";
 
 const localEnv = fileURLToPath(new URL(".env", import.meta.url));
 if (existsSync(localEnv)) loadEnvFile(localEnv);
@@ -23,6 +24,9 @@ const config = privateConfig();
 const store = new PrivateStore(config.path, config.key);
 const service = serviceClient();
 app.use("/api/private", refundRoutes({ store, allowedOrigins: origins, workerEnabled: Boolean(service), service }));
+if (process.env.SERVE_FRONTEND === "true") {
+  mountFrontend(app, fileURLToPath(new URL("../dist/", import.meta.url)));
+}
 if (service) startNotificationWorker(store, service, Number(process.env.DEADLINE_WARNING_HOURS || 24));
 else console.info("Automatic notifications are disabled until Blocks service credentials are configured.");
 app.listen(port, process.env.API_HOST || "127.0.0.1", () => console.info(`ChikitsaFollow API listening on port ${port}`));

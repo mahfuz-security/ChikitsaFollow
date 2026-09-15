@@ -9,7 +9,8 @@ See [SRS implementation status](../SRS-IMPLEMENTATION.md) for implemented flows 
 Run `npm run start:api` alongside Vite for reviewed service guidance and optional
 server-side Groq drafts. Without provider configuration, reviewed templates remain
 available. See [server setup](server/README.md); never put a provider key in a
-`VITE_` variable. The backend must be deployed separately from the static frontend.
+`VITE_` variable. The application Docker image serves the frontend and API
+together; local development still runs Vite and the API separately.
 
 The common module has 358 English and 358 Bangla keys published in Blocks dev.
 `npm run export:localization` regenerates local dictionaries; publishing changes
@@ -67,7 +68,12 @@ Blocks SSO sets a **Secure, domain-scoped** session-related cookie as part of th
 
 ## Blocks Release deployment
 
-The scaffold includes `Dockerfile` and `nginx.conf` for Blocks Release. The Release service must pass Docker build arg `ci_build=<environment>` plus the public `VITE_BLOCKS_*` build args documented in the Dockerfile. The generated `package.json` also provides `build:dev`, `build:test`, `build:stg`, `build:iat`, `build:uat`, `build:preprod`, `build:prodshadow`, and `build:prod` scripts for local checks.
+`Dockerfile` builds a combined Node frontend/API service on port 8080; the legacy
+`nginx.conf` is not used by this image. The Release service must use `app/` as
+the build context and pass `ci_build=<environment>` plus the public
+`VITE_BLOCKS_*` build args documented in the Dockerfile. Runtime server secrets
+and persistent storage must be configured separately. The generated scripts
+also provide environment-specific builds for local checks.
 
 During each environment build, `scripts/write-release-env.mjs` writes `dist/env.<environment>` from client-safe Docker build args or local `.env` files. Root `.env` remains gitignored and must not be committed.
 

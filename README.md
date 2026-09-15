@@ -188,8 +188,10 @@ The current release review has these unresolved requirements:
 - Verify cloud authorization and the complete workflow using every role on the deployed URL.
 - Complete the requested live showcase seed, quality-chart review, and retrieval-based assistant work.
 
-The frontend Docker image does not include the private API. A successful static
-build is not an end-to-end deployment. See [release checks](RELEASE-CHECKLIST.md)
+The application Docker image serves both the frontend and private API on port
+8080. Hosting must mount durable private storage at `/data` and inject server
+secrets at runtime. A successful image build is not an end-to-end deployment.
+See [release checks](RELEASE-CHECKLIST.md)
 before publishing or deploying a release.
 
 ## Security And Data Boundaries

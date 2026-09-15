@@ -5,6 +5,28 @@ production sign-off remain on hold pending the checks below.
 
 ## Local Verification: 2026-09-15
 
+### Combined Hosting Follow-Up
+
+The owner selected Blocks hosting for both frontend and API. `app/Dockerfile`
+now serves both on port 8080. Updated verification: 108 tests across 29 files
+passed, TypeScript checks passed, and the Docker image built successfully.
+Local container smoke checks passed for pages, callback routing, assistant JSON,
+unauthenticated private-route rejection, hidden environment/source files, and
+restart with a local mounted volume. These checks do not prove Blocks persistence.
+
+The Blocks hosting settings query returned `providers: []`. No persistent-volume
+configuration command is exposed by the installed Release CLI. Before deployment,
+a Blocks operator must confirm the following for this repository:
+
+- `app/` build context and container port 8080.
+- A durable volume mounted at `/data`, writable by UID 1000.
+- One replica, with no overlapping writers during replacement.
+- Runtime secret injection, separate from browser build arguments.
+- Least-privilege service credentials, hospital branch mapping, and managed encryption key.
+
+The registered dev callback already matches the target URL. No live deployment
+or secret synchronization has been performed in this follow-up.
+
 | Check | Result |
 | --- | --- |
 | `npm test` | Passed: 104 tests across 28 files. |
