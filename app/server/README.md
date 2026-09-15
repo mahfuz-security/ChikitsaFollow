@@ -67,8 +67,10 @@ volume. A container filesystem alone is not persistent storage.
 
 Inject `PAYOUT_ENCRYPTION_KEY`, service credentials, the hospital branch mapping,
 and optional Groq credentials as runtime environment values, never Docker build
-arguments or frontend variables. Startup fails without the production encryption
-key. Confirm the hosting platform supports durable volumes and runtime secret
+arguments or frontend variables. Without the production encryption key, startup
+falls back to a generated key file in `PRIVATE_DATA_DIR` with a warning — the
+Release hosting surface has no runtime secret injection. Confirm the hosting
+platform supports durable volumes and runtime secret
 injection before triggering deployment; these are not configured by the current
 Release CLI hosting-settings surface.
 
