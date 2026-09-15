@@ -10,6 +10,13 @@ export function useCurrentUser() {
     queryFn: async () => {
       const response = await blocksClient.iam.me();
       if (response.isSuccess === false || (Array.isArray(response.errors) && response.errors.length) || !response.data?.itemId) throw new Error("Unable to load your account.");
+      // Staff branch assignment arrives as a custom IAM attribute; surface it
+      // top-level so branch-scoped UI reads profile.BranchId directly.
+      const user = response.data as Record<string, unknown>;
+      const attributes = user.attributes as Record<string, unknown> | undefined;
+      if ((user.BranchId === undefined || user.BranchId === null || user.BranchId === "") && typeof attributes?.BranchId === "string" && attributes.BranchId) {
+        return { ...response, data: { ...user, BranchId: attributes.BranchId } as BlocksUser };
+      }
       return response;
     },
     queryKey: ["iam", "me"]

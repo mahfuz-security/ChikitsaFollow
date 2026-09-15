@@ -6,7 +6,7 @@ import type { BlocksClient, BlocksUser } from "@seliseblocks/client";
 import { payoutInput, type PayoutInput } from "../src/features/refunds/payoutTypes";
 import { scanForClinical } from "../src/features/ai/firewall";
 import { PrivateStore } from "./privateStore";
-import { payload, records, requestClient, roles, type Row } from "./blocksRuntime";
+import { payload, records, requestClient, roles, withBranch, type Row } from "./blocksRuntime";
 import { ticketRoutes } from "./tickets";
 import { patientHospitalRoutes, hospitalBranchMap, patientIdentity, snapshotPatientIdentity } from "./patientHospitals";
 
@@ -28,7 +28,7 @@ export function refundRoutes({ store, client = requestClient, allowedOrigins, wo
     try {
       const sdk = client(req);
       const result = await sdk.iam.me();
-      const user = result.data;
+      const user = withBranch(result.data as BlocksUser);
       if (result.isSuccess === false || !user?.itemId || user.active === false) throw new Error("Invalid session");
       res.locals.sdk = sdk; res.locals.user = user; next();
     } catch (error) {

@@ -13,6 +13,18 @@ export function projectConfig() {
 }
 export { rolesForUser as roles } from "../src/lib/roles";
 
+// Staff branch assignment is stored as a custom IAM attribute; surface it as a
+// top-level BranchId so branch-scoped checks work without admin mapping env.
+export function withBranch<T extends Record<string, unknown>>(user: T): T {
+  if (user.BranchId === undefined || user.BranchId === null || user.BranchId === "") {
+    const attributes = user.attributes;
+    const branchId = attributes && typeof attributes === "object" && !Array.isArray(attributes)
+      ? (attributes as Record<string, unknown>).BranchId : undefined;
+    if (typeof branchId === "string" && branchId) return { ...user, BranchId: branchId };
+  }
+  return user;
+}
+
 // The hosted login keeps its API session in host-only cookies on the Blocks API
 // domain, which never reach this server, but it also leaves a refresh-token
 // cookie (rt_<app-host>) on the app origin. Minting a short-lived access token

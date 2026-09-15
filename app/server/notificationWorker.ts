@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { BlocksClient, BlocksUser } from "@seliseblocks/client";
-import { records, roles, type Row } from "./blocksRuntime";
+import { records, roles, withBranch, type Row } from "./blocksRuntime";
 import { PrivateStore } from "./privateStore";
 const safeReference = (value: unknown) => /^CF-[A-Z0-9]{8,12}$/.test(String(value)) ? String(value) : "";
 
@@ -19,7 +19,7 @@ export async function notificationTick(store: PrivateStore, sdk: BlocksClient, n
   for (let pageNo = 1; pageNo <= 1000; pageNo++) {
     const page = await sdk.iam.users.list({ pageNo, pageSize: 100 });
     if (page.isSuccess === false || !Array.isArray(page.data)) throw new Error("Cannot resolve notification recipients");
-    users.push(...page.data);
+    users.push(...page.data.map(user => withBranch(user as BlocksUser)));
     if (users.length >= (page.totalCount ?? users.length)) break;
     if (!page.data.length || pageNo === 1000) throw new Error("Incomplete user scan");
   }
