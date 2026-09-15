@@ -1,0 +1,16 @@
+# Root build context: only app/ is copied into the image; keep the rest out.
+.claude
+.codex
+.git
+app/node_modules
+app/dist
+app/.cert
+app/.env
+app/.env.*
+!app/.env.example
+app/env.*
+app/server/.env
+app/server/.env.*
+app/server/.private
+*.md
+blocks.json
