@@ -12,7 +12,7 @@ import { patientHospitalRoutes, hospitalBranchMap, patientIdentity, snapshotPati
 
 class Denied extends Error { constructor(readonly status: number, message: string) { super(message); } }
 const id = z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/);
-const complaint = z.object({ requestId: z.string().uuid(), organizationId: id, category: z.enum(["report_delay", "instructions", "missed_follow_up", "wait_time", "billing", "staff_behavior", "facility", "communication", "other"]), subject: z.string().trim().min(1).max(120), refundRequested: z.boolean().default(false) }).strict();
+const complaint = z.object({ requestId: z.string().uuid(), organizationId: id, branchId: id.optional(), category: z.enum(["report_delay", "instructions", "missed_follow_up", "wait_time", "billing", "staff_behavior", "facility", "communication", "other"]), subject: z.string().trim().min(1).max(120), refundRequested: z.boolean().default(false) }).strict();
 type Config = { store: PrivateStore; client?: (req: Request) => BlocksClient; allowedOrigins: string[]; workerEnabled: boolean; service?: BlocksClient };
 export function refundRoutes({ store, client = requestClient, allowedOrigins, workerEnabled, service }: Config) {
   const router = Router();
@@ -31,7 +31,10 @@ export function refundRoutes({ store, client = requestClient, allowedOrigins, wo
       const user = result.data;
       if (result.isSuccess === false || !user?.itemId || user.active === false) throw new Error("Invalid session");
       res.locals.sdk = sdk; res.locals.user = user; next();
-    } catch (error) { console.error("[auth] iam.me failed:", error instanceof Error ? error.message : error); res.status(401).json({ error: "authentication_required" }); }
+    } catch (error) {
+      console.error("[auth] session validation failed:", error instanceof Error ? error.message : error);
+      res.status(401).json({ error: "authentication_required" });
+    }
   });
   function patient(user: BlocksUser) {
     if (!roles(user).includes("patient") || roles(user).includes("branch_manager")) throw new Denied(403, "patient_required");
@@ -69,7 +72,9 @@ export function refundRoutes({ store, client = requestClient, allowedOrigins, wo
   });
   router.post(["/refund-complaints", "/patient-complaints"], async (req, res) => {
     const owner = patient(res.locals.user), input = complaint.parse(req.body), sdk = res.locals.sdk as BlocksClient;
-    const branchId = hospitalBranchMap()[input.organizationId];
+    // Patients choose the complaint branch directly; the administrator mapping
+    // is only a fallback for older clients that send the clinic alone.
+    const branchId = input.branchId ?? hospitalBranchMap()[input.organizationId];
     const hospitalId = patientIdentity(store, owner, input.organizationId);
     if (!hospitalId) throw new Denied(400, "hospital_patient_id_required");
     if (!branchId) throw new Denied(400, "hospital_not_ready");

@@ -62,6 +62,8 @@ export const bengaliDictionary: Partial<Record<TranslationKey, string>> = {
   "complaint.receipt": "ক্লিনিকে ফলো-আপের জন্য এই রেফারেন্সটি রাখুন। আপনার অভিযোগ পর্যালোচনার অপেক্ষায় আছে।",
   "complaint.failed": "অভিযোগ জমা নিশ্চিত করা যায়নি। একই অভিযোগ আবার জমা এড়াতে লেখাটি রেখে পুনরায় চেষ্টা করার আগে ক্লিনিকে যোগাযোগ করুন।",
   "complaint.branchesFailed": "ক্লিনিকের শাখাগুলো লোড করা যায়নি।",
+  "complaint.branch": "শাখা",
+  "complaint.branchPlaceholder": "একটি শাখা নির্বাচন করুন",
   "complaint.noBranches": "অভিযোগের জন্য কোনো ক্লিনিক শাখা পাওয়া যায়নি। আপনার ক্লিনিকে যোগাযোগ করুন।",
   "complaint.clinical": "রোগ নির্ণয়, প্রেসক্রিপশন বা পরীক্ষার ফল ছাড়া সেবার সমস্যাটি লিখুন।",
   "common.retry": "আবার চেষ্টা করুন",

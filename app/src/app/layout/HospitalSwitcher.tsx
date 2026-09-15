@@ -16,7 +16,7 @@ export function HospitalSwitcher() {
   } });
   return <label className="hospital-switcher"><span className="sr-only">{t("hospitals.active")}</span><select aria-label={t("hospitals.active")} value={query.data?.activeOrganizationId ?? ""} disabled={query.isPending || query.isError || pendingWrites > 0} onChange={event => {
     if (window.confirm(t("hospitals.switchConfirm"))) change.mutate(event.target.value);
-  }}><option value="">{t("auth.signup.orgPlaceholder")}</option>{query.data?.hospitals.filter(hospital => hospital.selected).map(hospital => <option key={hospital.itemId} value={hospital.itemId}>{hospital.name}</option>)}</select>{change.isError || query.isError ? <span role="alert">{t("hospitals.failed")}</span> : null}</label>;
+  }}><option value="">{t("auth.signup.orgPlaceholder")}</option>{query.data?.hospitals.map(hospital => <option key={hospital.itemId} value={hospital.itemId}>{hospital.name}</option>)}</select>{change.isError || query.isError ? <span role="alert">{t("hospitals.failed")}</span> : null}</label>;
 }
 
 export function PatientHospitalScope({ children }: { children: ReactNode }) {

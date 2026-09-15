@@ -14,7 +14,7 @@ export async function complaintBranches(): Promise<ComplaintBranch[]> {
     .map(hospital => ({ itemId: hospital.itemId, Name: hospital.name, branchId: hospital.branchId }));
 }
 
-export async function submitPatientComplaint(input: { branchId: string; category: string; subject: string; refundRequested?: boolean; requestId?: string }) {
+export async function submitPatientComplaint(input: { organizationId: string; branchId?: string; category: string; subject: string; refundRequested?: boolean; requestId?: string }) {
   const profile = (await blocksClient.iam.me()).data;
   if (!profile?.itemId || !rolesForUser(profile).includes("patient") || isReviewOnlyManager(profile)) throw new Error("patient_required");
   const subject = input.subject.trim();
@@ -22,7 +22,7 @@ export async function submitPatientComplaint(input: { branchId: string; category
   if (!scanForClinical(subject).ok) throw new Error("clinical_content");
   if (!input.requestId) throw new Error("invalid_complaint");
   const result = await privateApi<{ reference: string }>("/patient-complaints", "POST", {
-    organizationId: input.branchId, category: input.category, subject, requestId: input.requestId, refundRequested: Boolean(input.refundRequested)
+    organizationId: input.organizationId, branchId: input.branchId, category: input.category, subject, requestId: input.requestId, refundRequested: Boolean(input.refundRequested)
   });
   return result.reference;
 }

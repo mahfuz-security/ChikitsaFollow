@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { BlocksUser } from "@seliseblocks/client";
+import type { BlocksClient, BlocksUser } from "@seliseblocks/client";
 import { PrivateStore } from "./privateStore";
-import { roles } from "./blocksRuntime";
+import { roles, records } from "./blocksRuntime";
 import { signupClinicCatalog } from "../src/features/organizations/signupClinicCatalog";
 
 export const hospitalPatientId = z.string().trim().min(2).max(64).regex(/^[a-zA-Z0-9][a-zA-Z0-9./_-]+$/);
@@ -40,17 +40,24 @@ export function patientHospitalRoutes(store: PrivateStore) {
     }
     return store.db.prepare("SELECT organization_id,source FROM patient_hospitals WHERE owner=? ORDER BY rowid").all(user.itemId!);
   }
-  router.get("/patient-hospitals", (_req, res) => {
+  router.get("/patient-hospitals", async (_req, res) => {
     const user = res.locals.user as BlocksUser;
     if (!owner(user)) { res.status(403).json({ error: "patient_required" }); return; }
     const saved = selected(user);
-    // Mapping is administrator-controlled; never equate unrelated IAM and Branch IDs.
-    const mapping = hospitalBranchMap();
+    const sdk = res.locals.sdk as BlocksClient;
+    // Patients pick clinic and branch freely; branches come from the live
+    // Branch records so the choice always references a real complaint branch.
+    let branches: { itemId: string; name: string }[] = [];
+    try {
+      branches = (await records(sdk, "Branch", ["Name", "IsActive"]))
+        .filter(row => row.IsActive === true)
+        .map(row => ({ itemId: String(row.ItemId ?? row.itemId), name: String(row.Name) }));
+    } catch { /* No branch access: the form shows no branches until configured. */ }
     const active = store.db.prepare("SELECT organization_id FROM patient_active_hospital WHERE owner=?").get(user.itemId!);
     res.json({ hospitals: clinics.map(clinic => {
       const patientId = patientIdentity(store, user.itemId!, clinic.itemId);
-      return { ...clinic, selected: saved.some(row => row.organization_id === clinic.itemId), branchId: mapping[clinic.itemId] ?? null, patientIdLast4: patientId?.slice(-4) ?? null, patientIdVerified: false };
-    }), primaryOrganizationId: saved[0]?.organization_id ?? null, activeOrganizationId: active?.organization_id ?? saved[0]?.organization_id ?? null });
+      return { ...clinic, selected: saved.some(row => row.organization_id === clinic.itemId), branchId: branches[0]?.itemId ?? null, patientIdLast4: patientId?.slice(-4) ?? null, patientIdVerified: false };
+    }), branches, primaryOrganizationId: saved[0]?.organization_id ?? null, activeOrganizationId: active?.organization_id ?? saved[0]?.organization_id ?? null });
   });
   router.post("/patient-hospitals", (req, res) => {
     const user = res.locals.user as BlocksUser, id = owner(user);

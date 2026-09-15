@@ -12,17 +12,51 @@ export function projectConfig() {
   };
 }
 export { rolesForUser as roles } from "../src/lib/roles";
+
+// The hosted login keeps its API session in host-only cookies on the Blocks API
+// domain, which never reach this server, but it also leaves a refresh-token
+// cookie (rt_<app-host>) on the app origin. Minting a short-lived access token
+// from that cookie through the SDK's own refresh grant is the backend-for-
+//frontend way to authenticate same-origin API calls; nothing is logged.
+const mintedTokens = new Map<string, { token: string; expires: number }>();
+function refreshCookie(req: Request): string | undefined {
+  const host = new URL(req.headers.origin ?? (projectConfig().appDomain || "https://localhost")).hostname;
+  const match = req.headers.cookie?.match(new RegExp(`(?:^|;\\s*)rt_${host.replace(/\./g, "\\.")}=([^;]+)`));
+  return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+}
+async function mintAccessToken(rt: string): Promise<string | undefined> {
+  const cached = mintedTokens.get(rt);
+  if (cached && Date.now() < cached.expires) return cached.token;
+  const boundedFetch: typeof fetch = (url, init) => fetch(url, { ...init, redirect: "error", signal: AbortSignal.timeout(15000) });
+  const issuer = createBlocksClient({ ...projectConfig(), fetch: boundedFetch });
+  const response = await issuer.auth.oidc.refreshToken({ refreshToken: rt });
+  const token = response.access_token ?? response.accessToken;
+  if (!token || response.error) return undefined;
+  const ttl = Math.max(1, Number(response.expires_in ?? response.expiresIn ?? 60) - 30) * 1000;
+  mintedTokens.set(rt, { token, expires: Date.now() + ttl });
+  return token;
+}
+
 export function requestClient(req: Request): BlocksClient {
   const config = projectConfig();
-  const token = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
-  // SDK transport forwards the hosted IAM session only to the fixed Blocks host.
+  const bearer = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
+  const rt = refreshCookie(req);
+  // SDK transport reaches only the fixed Blocks host. When neither a bearer
+  // header nor a mintable refresh cookie is available, forward whatever
+  // session cookies arrived so cookie-based tenants keep working.
   const transport: typeof fetch = (url, init) => {
     if (new URL(String(url)).origin !== config.apiUrl) throw new Error("Unexpected SDK destination");
     const headers = new Headers(init?.headers);
-    if (!token && req.headers.cookie) headers.set("Cookie", req.headers.cookie);
+    if (!bearer && !rt && req.headers.cookie) headers.set("Cookie", req.headers.cookie);
     return fetch(url, { ...init, headers, redirect: "error", signal: AbortSignal.timeout(15000) });
   };
-  return createBlocksClient({ ...config, accessToken: token, fetch: transport });
+  return createBlocksClient({
+    ...config,
+    fetch: transport,
+    // Prefer an explicit bearer header; otherwise resolve lazily so the
+    // refresh grant runs only when the SDK actually needs a token.
+    ...(bearer ? { accessToken: bearer } : rt ? { accessToken: () => mintAccessToken(rt) } : {})
+  });
 }
 export function serviceClient(): BlocksClient | undefined {
   const clientId = process.env.BLOCKS_SERVICE_CLIENT_ID;

@@ -72,6 +72,8 @@ export const defaultDictionary = {
   "complaint.receipt": "Keep this reference for follow-up with your clinic. Your complaint is awaiting review.",
   "complaint.failed": "We could not confirm submission. Keep your text and contact your clinic before retrying to avoid a duplicate.",
   "complaint.branchesFailed": "We could not load the clinic branches.",
+  "complaint.branch": "Branch",
+  "complaint.branchPlaceholder": "Choose a branch",
   "complaint.noBranches": "No clinic branches are available for complaints. Please contact your clinic.",
   "complaint.clinical": "Please describe the service issue without diagnoses, prescriptions, or test results.",
   "common.retry": "Try again",

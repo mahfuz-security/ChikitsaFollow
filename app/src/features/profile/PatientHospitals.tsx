@@ -9,7 +9,8 @@ import { ActionButton } from "../../shared/ui/ActionButton";
 import { rolesForUser } from "../../lib/roles";
 
 export type PatientHospital = { itemId: string; name: string; selected: boolean; branchId: string | null; patientIdLast4: string | null; patientIdVerified: boolean };
-export type PatientHospitalsResponse = { hospitals: PatientHospital[]; primaryOrganizationId: string | null; activeOrganizationId: string | null };
+export type PatientBranch = { itemId: string; name: string };
+export type PatientHospitalsResponse = { hospitals: PatientHospital[]; branches: PatientBranch[]; primaryOrganizationId: string | null; activeOrganizationId: string | null };
 export function usePatientHospitals() {
   const me = useCurrentUser();
   return useQuery({ queryKey: ["patient-hospitals", me.data?.data?.itemId], queryFn: () => privateApi<PatientHospitalsResponse>("/patient-hospitals"), enabled: Boolean(me.data?.data?.itemId) && rolesForUser(me.data?.data).includes("patient"), retry: false });
