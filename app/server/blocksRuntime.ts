@@ -1,25 +1,35 @@
 import { createBlocksClient, type BlocksClient, type BlocksUser } from "@seliseblocks/client";
 import type { Request } from "express";
 
-export const projectConfig = { apiUrl: "https://api.seliseblocks.com", xBlocksKey: "D08e00d1169e543c9b2c2ac64060b9358", appDomain: "https://dtdgmi-elgoe.slsblx.com" };
+// Same tenant settings as the frontend (app/.env); the private API must talk to
+// the same Blocks host the browser session was established on, or /me rejects it.
+// Lazy: index.ts loads app/.env after imports are hoisted, so read env per call.
+export function projectConfig() {
+  return {
+    apiUrl: process.env.VITE_BLOCKS_API_URL ?? "https://blocksapi.slsblx.com",
+    xBlocksKey: process.env.VITE_BLOCKS_X_BLOCKS_KEY ?? "",
+    appDomain: process.env.VITE_BLOCKS_APP_DOMAIN ?? "",
+  };
+}
 export { rolesForUser as roles } from "../src/lib/roles";
 export function requestClient(req: Request): BlocksClient {
+  const config = projectConfig();
   const token = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
   // SDK transport forwards the hosted IAM session only to the fixed Blocks host.
   const transport: typeof fetch = (url, init) => {
-    if (new URL(String(url)).origin !== projectConfig.apiUrl) throw new Error("Unexpected SDK destination");
+    if (new URL(String(url)).origin !== config.apiUrl) throw new Error("Unexpected SDK destination");
     const headers = new Headers(init?.headers);
     if (!token && req.headers.cookie) headers.set("Cookie", req.headers.cookie);
     return fetch(url, { ...init, headers, redirect: "error", signal: AbortSignal.timeout(15000) });
   };
-  return createBlocksClient({ ...projectConfig, accessToken: token, fetch: transport });
+  return createBlocksClient({ ...config, accessToken: token, fetch: transport });
 }
 export function serviceClient(): BlocksClient | undefined {
   const clientId = process.env.BLOCKS_SERVICE_CLIENT_ID;
   const clientSecret = process.env.BLOCKS_SERVICE_CLIENT_SECRET;
   if (!clientId || !clientSecret) return undefined;
   const boundedFetch: typeof fetch = (url, init) => fetch(url, { ...init, redirect: "error", signal: AbortSignal.timeout(15000) });
-  const auth = createBlocksClient({ ...projectConfig, fetch: boundedFetch });
+  const auth = createBlocksClient({ ...projectConfig(), fetch: boundedFetch });
   let token: string | undefined, expires = 0, pending: Promise<string> | undefined;
   async function resolveToken() {
     if (token && Date.now() < expires) return token;
@@ -31,7 +41,7 @@ export function serviceClient(): BlocksClient | undefined {
     }).finally(() => { pending = undefined; });
     return pending;
   }
-  return createBlocksClient({ ...projectConfig, fetch: boundedFetch, accessToken: resolveToken, onUnauthorized: () => { expires = 0; return resolveToken(); } });
+  return createBlocksClient({ ...projectConfig(), fetch: boundedFetch, accessToken: resolveToken, onUnauthorized: () => { expires = 0; return resolveToken(); } });
 }
 export type Row = Record<string, unknown>;
 export function payload(response: unknown, operation: string): Row {

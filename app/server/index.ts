@@ -9,7 +9,9 @@ import { serviceClient } from "./blocksRuntime";
 import { startNotificationWorker } from "./notificationWorker";
 import { mountFrontend } from "./frontend";
 
-const localEnv = fileURLToPath(new URL(".env", import.meta.url));
+// Single combined env file at app/.env, shared with the Vite frontend.
+// Only VITE_-prefixed values are browser-visible; server-only keys stay private.
+const localEnv = fileURLToPath(new URL("../.env", import.meta.url));
 if (existsSync(localEnv)) loadEnvFile(localEnv);
 
 const port = Number(process.env.API_PORT || 8787);

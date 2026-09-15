@@ -31,7 +31,7 @@ export function refundRoutes({ store, client = requestClient, allowedOrigins, wo
       const user = result.data;
       if (result.isSuccess === false || !user?.itemId || user.active === false) throw new Error("Invalid session");
       res.locals.sdk = sdk; res.locals.user = user; next();
-    } catch { res.status(401).json({ error: "authentication_required" }); }
+    } catch (error) { console.error("[auth] iam.me failed:", error instanceof Error ? error.message : error); res.status(401).json({ error: "authentication_required" }); }
   });
   function patient(user: BlocksUser) {
     if (!roles(user).includes("patient") || roles(user).includes("branch_manager")) throw new Denied(403, "patient_required");

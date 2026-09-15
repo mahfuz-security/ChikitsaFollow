@@ -122,7 +122,6 @@ Refund recording does not transfer money through a bank or mobile wallet.
 cd app
 npm ci
 cp .env.example .env
-cp server/.env.example server/.env
 npm run cert
 npm run dev
 ```
@@ -134,10 +133,11 @@ cd app
 npm run start:api
 ```
 
-Configure the public Blocks settings in `app/.env`. Configure server credentials,
-allowed origins, encryption, and private storage in `app/server/.env` or a secret
-manager. Neither file belongs in Git. All `VITE_` values are browser-visible:
-never place passwords, provider keys, or service-client secrets there.
+Configure the public Blocks settings and the private API settings in the single
+`app/.env` file (server credentials, allowed origins, encryption, and private
+storage), or supply server values via a secret manager at runtime. The file does
+not belong in Git. Only `VITE_`-prefixed values are browser-visible; never place
+passwords, provider keys, or service-client secrets in a `VITE_` variable.
 
 Hosted login needs HTTPS on the registered project domain, a trusted local
 certificate, and an exact `/login/callback` registration. Follow the detailed

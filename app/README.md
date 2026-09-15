@@ -26,9 +26,11 @@ npm run dev
 ```
 
 Create `.env` from `.env.example` and verify every public setting against your
-Blocks project, including `VITE_BLOCKS_OIDC_CLIENT_ID`. Local environment files
-are not distributed with this repository. See the [project guide](../README.md)
-for the private API and release prerequisites.
+Blocks project, including `VITE_BLOCKS_OIDC_CLIENT_ID`. This single file also
+holds the private API's server-only settings (below the marked section); only
+`VITE_`-prefixed values reach the browser. Local environment files are not
+distributed with this repository. See the [project guide](../README.md) for the
+private API and release prerequisites.
 
 ## Public signup clinics
 

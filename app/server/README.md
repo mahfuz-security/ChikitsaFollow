@@ -14,10 +14,13 @@ persistent storage, machine credentials and production requirements.
 `/api/assistant` and `/api/private` to that port over HTTP behind its HTTPS frontend.
 Set `APP_ORIGINS` to the exact browser origins, including the port.
 
-The server reads environment variables and optionally loads `server/.env`, never frontend Vite variables. Use the
-names in `.env.example` with your process manager or secret manager. Never use
-a `VITE_` prefix for a provider credential. The server's `.env` is ignored by git.
-With Node 22+ you can use `node --env-file=server/.env --import tsx server/index.ts`.
+The server reads environment variables and loads the combined `app/.env`
+(the same single file the frontend uses) at startup; non-`VITE_` values in it are
+never exposed to the browser. Use the names in `app/.env.example` with your
+process manager or secret manager. Never use a `VITE_` prefix for a provider
+credential. The `.env` file is ignored by git.
+With Node 22+ you can use `node --env-file=../.env --import tsx server/index.ts`
+instead of relying on the built-in loader.
 
 ## Providers
 

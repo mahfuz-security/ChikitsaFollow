@@ -68,6 +68,12 @@ The tenant key + client id pair live in the Blocks portal under the project
 that owns `blocks.json`. If you don't have them yet, ask whoever provisioned
 the project.
 
+`app/.env` is the **single combined env file**: it also holds the private API's
+server-only settings (`GROQ_API_KEY`, `BLOCKS_SERVICE_CLIENT_ID/SECRET`,
+`PAYOUT_ENCRYPTION_KEY`, `APP_ORIGINS`, etc. — see `app/.env.example`). Only
+`VITE_`-prefixed values are visible to the browser; the server reads the rest.
+There is no separate `app/server/.env` anymore.
+
 ## 3. Install dependencies
 
 ```bash
